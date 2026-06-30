@@ -10,46 +10,44 @@
     <packaging>pom</packaging>
 
     <name>SM2 Security Data Exchange SDK</name>
-    <description>SM2 Security Data Exchange SDK - Parent POM</description>
+    <description>SM2 安全数据交换 SDK — 加解密、签名验签、会话管理、HTTP 客户端、Spring Boot 自动配置</description>
     <url>https://github.com/sm2sdk/sm2-sdk</url>
 
     <modules>
         <module>core</module>
         <module>client</module>
-        <module>server</module>
-        <module>starter</module>
+        <module>spring-boot-starter</module>
+        <module>spring-boot3-starter</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- Java version -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Java 版本（core/client 编译为 JDK 8 字节码，starter 按需覆盖） -->
+        <maven.compiler.release>8</maven.compiler.release>
 
-        <!-- Core dependencies -->
+        <!-- 核心依赖 -->
         <hutool.version>5.8.32</hutool.version>
         <jackson.version>2.15.4</jackson.version>
         <caffeine.version>2.9.3</caffeine.version>
         <slf4j.version>2.0.9</slf4j.version>
 
+        <!-- Spring（Spring Boot 2.7 / 3.2 均在此管理版本） -->
+        <spring-boot.version>2.7.18</spring-boot.version>
+        <spring-boot3.version>3.2.0</spring-boot3.version>
+        <spring.version>5.3.31</spring.version>
+        <spring3.version>6.1.1</spring3.version>
+
         <!-- Servlet API -->
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
         <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
 
-        <!-- Spring -->
-        <spring-boot.version>3.2.0</spring-boot.version>
-        <spring.version>6.1.1</spring.version>
-
-        <!-- Lettuce -->
-        <lettuce.version>6.3.2.RELEASE</lettuce.version>
-
-        <!-- Testing -->
+        <!-- 测试 -->
         <junit.version>5.10.1</junit.version>
         <mockito.version>5.8.0</mockito.version>
 
-        <!-- Plugins -->
+        <!-- 插件 -->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.3</maven-shade-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -59,21 +57,17 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Hutool -->
+            <!-- === 核心依赖 === -->
             <dependency>
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>${hutool.version}</version>
             </dependency>
-
-            <!-- BouncyCastle (SM2/SM3/SM4 算法底层实现，jdk18on 兼容 JDK 8/11/17/21) -->
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
                 <version>1.84</version>
             </dependency>
-
-            <!-- Jackson BOM -->
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
@@ -81,30 +75,36 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <!-- Caffeine -->
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${caffeine.version}</version>
             </dependency>
-
-            <!-- SLF4J -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
 
-            <!-- javax.servlet-api -->
+            <!-- === SDK 内部模块版本 === -->
+            <dependency>
+                <groupId>com.sm2sdk</groupId>
+                <artifactId>sm2-sdk-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sm2sdk</groupId>
+                <artifactId>sm2-sdk-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- === Servlet API === -->
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
                 <version>${javax.servlet-api.version}</version>
                 <scope>provided</scope>
             </dependency>
-
-            <!-- jakarta.servlet-api -->
             <dependency>
                 <groupId>jakarta.servlet</groupId>
                 <artifactId>jakarta.servlet-api</artifactId>
@@ -112,7 +112,7 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- Spring Boot BOM -->
+            <!-- === Spring Boot 2.7 BOM === -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -121,7 +121,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Spring Framework BOM -->
+            <!-- === Spring Framework 5.3 BOM === -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
@@ -130,14 +130,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Lettuce -->
-            <dependency>
-                <groupId>io.lettuce</groupId>
-                <artifactId>lettuce-core</artifactId>
-                <version>${lettuce.version}</version>
-            </dependency>
-
-            <!-- JUnit 5 BOM -->
+            <!-- === 测试 === -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -145,8 +138,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <!-- Mockito -->
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
@@ -159,33 +150,28 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Compiler plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
+                        <release>${maven.compiler.release}</release>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                 </plugin>
 
-                <!-- Shade plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>${maven-shade-plugin.version}</version>
                 </plugin>
 
-                <!-- Surefire plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
                 </plugin>
 
-                <!-- Source plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
@@ -200,13 +186,11 @@
                     </executions>
                 </plugin>
 
-                <!-- Javadoc plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
-                        <source>${maven.compiler.source}</source>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                 </plugin>

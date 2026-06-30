@@ -1,0 +1,262 @@
+package com.sm2sdk.starter;
+
+import com.sm2sdk.core.model.Sm2SdkConfig;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * SM2 SDK Spring Boot 配置属性，映射 {@code application.yml} 中的 {@code sm2.sdk} 前缀。
+ *
+ * <p>使用示例：
+ * <pre>{@code
+ * sm2:
+ *   sdk:
+ *     sm2-private-key: "0123456789abcdef..."
+ *     sm2-public-key: "fedcba9876543210..."
+ *     server-url: "https://api.example.com"
+ *     session-timeout-ms: 600000
+ * }</pre>
+ *
+ * <p>通过 {@link #toSdkConfig()} 转换为 {@link Sm2SdkConfig}。
+ */
+@ConfigurationProperties(prefix = "sm2.sdk")
+public class Sm2SdkProperties {
+
+    /** 本地 SM2 私钥（十六进制字符串） */
+    private String sm2PrivateKey;
+
+    /** 本地 SM2 公钥（十六进制字符串） */
+    private String sm2PublicKey;
+
+    /** 服务端 URL */
+    private String serverUrl;
+
+    /** 握手超时时间（毫秒），默认 10000 */
+    private long handshakeTimeoutMs = Sm2SdkConfig.DEFAULT_HANDSHAKE_TIMEOUT_MS;
+
+    /** 会话空闲超时时间（毫秒），默认 300000（5 分钟） */
+    private long sessionTimeoutMs = Sm2SdkConfig.DEFAULT_SESSION_TIMEOUT_MS;
+
+    /** 会话最大生命周期（毫秒），默认 3600000（1 小时） */
+    private long maxSessionLifetimeMs = Sm2SdkConfig.DEFAULT_MAX_SESSION_LIFETIME_MS;
+
+    /** 每个会话的最大请求数，默认 1000 */
+    private int maxSessionRequests = Sm2SdkConfig.DEFAULT_MAX_SESSION_REQUESTS;
+
+    /** 最大并发会话数，默认 10000 */
+    private int maxSessions = Sm2SdkConfig.DEFAULT_MAX_SESSIONS;
+
+    /** 会话清理间隔（毫秒），默认 60000（1 分钟） */
+    private long sessionCleanupIntervalMs = Sm2SdkConfig.DEFAULT_SESSION_CLEANUP_INTERVAL_MS;
+
+    /** Redis 键名前缀，默认 "sm2" */
+    private String redisKeyPrefix = Sm2SdkConfig.DEFAULT_REDIS_KEY_PREFIX;
+
+    /** 本地加密密钥（Base64 编码的 AES 密钥），用于保护 Redis 中的 SM4 密钥 */
+    private String localSecretKey;
+
+    /** 对端配置列表 */
+    @NestedConfigurationProperty
+    private List<PeerProperties> peers = new ArrayList<>();
+
+    /** 客户端访问控制配置 */
+    @NestedConfigurationProperty
+    private ClientAccessProperties clientAccess;
+
+    // ========== Getters / Setters ==========
+
+    public String getSm2PrivateKey() {
+        return sm2PrivateKey;
+    }
+
+    public void setSm2PrivateKey(String sm2PrivateKey) {
+        this.sm2PrivateKey = sm2PrivateKey;
+    }
+
+    public String getSm2PublicKey() {
+        return sm2PublicKey;
+    }
+
+    public void setSm2PublicKey(String sm2PublicKey) {
+        this.sm2PublicKey = sm2PublicKey;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
+    }
+
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    public long getHandshakeTimeoutMs() {
+        return handshakeTimeoutMs;
+    }
+
+    public void setHandshakeTimeoutMs(long handshakeTimeoutMs) {
+        this.handshakeTimeoutMs = handshakeTimeoutMs;
+    }
+
+    public long getSessionTimeoutMs() {
+        return sessionTimeoutMs;
+    }
+
+    public void setSessionTimeoutMs(long sessionTimeoutMs) {
+        this.sessionTimeoutMs = sessionTimeoutMs;
+    }
+
+    public long getMaxSessionLifetimeMs() {
+        return maxSessionLifetimeMs;
+    }
+
+    public void setMaxSessionLifetimeMs(long maxSessionLifetimeMs) {
+        this.maxSessionLifetimeMs = maxSessionLifetimeMs;
+    }
+
+    public int getMaxSessionRequests() {
+        return maxSessionRequests;
+    }
+
+    public void setMaxSessionRequests(int maxSessionRequests) {
+        this.maxSessionRequests = maxSessionRequests;
+    }
+
+    public int getMaxSessions() {
+        return maxSessions;
+    }
+
+    public void setMaxSessions(int maxSessions) {
+        this.maxSessions = maxSessions;
+    }
+
+    public long getSessionCleanupIntervalMs() {
+        return sessionCleanupIntervalMs;
+    }
+
+    public void setSessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
+        this.sessionCleanupIntervalMs = sessionCleanupIntervalMs;
+    }
+
+    public String getRedisKeyPrefix() {
+        return redisKeyPrefix;
+    }
+
+    public void setRedisKeyPrefix(String redisKeyPrefix) {
+        this.redisKeyPrefix = redisKeyPrefix;
+    }
+
+    public String getLocalSecretKey() {
+        return localSecretKey;
+    }
+
+    public void setLocalSecretKey(String localSecretKey) {
+        this.localSecretKey = localSecretKey;
+    }
+
+    public List<PeerProperties> getPeers() {
+        return peers;
+    }
+
+    public void setPeers(List<PeerProperties> peers) {
+        this.peers = peers != null ? peers : new ArrayList<>();
+    }
+
+    public ClientAccessProperties getClientAccess() {
+        return clientAccess;
+    }
+
+    public void setClientAccess(ClientAccessProperties clientAccess) {
+        this.clientAccess = clientAccess;
+    }
+
+    // ========== 转换方法 ==========
+
+    /**
+     * 将 Spring Boot 配置属性转换为 {@link Sm2SdkConfig}。
+     *
+     * @return Sm2SdkConfig 实例
+     */
+    public Sm2SdkConfig toSdkConfig() {
+        Sm2SdkConfig config = new Sm2SdkConfig();
+        config.setSm2PrivateKey(sm2PrivateKey);
+        config.setSm2PublicKey(sm2PublicKey);
+        config.setServerUrl(serverUrl);
+        config.setHandshakeTimeoutMs(handshakeTimeoutMs);
+        config.setSessionTimeoutMs(sessionTimeoutMs);
+        config.setMaxSessionLifetimeMs(maxSessionLifetimeMs);
+        config.setMaxSessionRequests(maxSessionRequests);
+        config.setMaxSessions(maxSessions);
+        config.setSessionCleanupIntervalMs(sessionCleanupIntervalMs);
+        config.setRedisKeyPrefix(redisKeyPrefix);
+        config.setLocalSecretKey(localSecretKey);
+
+        // 转换对端配置列表
+        if (peers != null) {
+            List<Sm2SdkConfig.PeerConfig> peerConfigs = new ArrayList<>();
+            for (PeerProperties p : peers) {
+                peerConfigs.add(new Sm2SdkConfig.PeerConfig(
+                        p.getPublicKey(), p.getServerUrl()));
+            }
+            config.setPeerConfigs(peerConfigs);
+        }
+
+        // 转换客户端访问控制配置
+        if (clientAccess != null) {
+            Sm2SdkConfig.ClientAccessConfig accessConfig =
+                    new Sm2SdkConfig.ClientAccessConfig(clientAccess.getPaths());
+            config.setClientAccessConfig(accessConfig);
+        }
+
+        return config;
+    }
+
+    // ========== 内部类 ==========
+
+    /**
+     * 对端配置属性。
+     */
+    public static class PeerProperties {
+
+        /** 对端 SM2 公钥（十六进制字符串） */
+        private String publicKey;
+
+        /** 对端服务端 URL */
+        private String serverUrl;
+
+        public String getPublicKey() {
+            return publicKey;
+        }
+
+        public void setPublicKey(String publicKey) {
+            this.publicKey = publicKey;
+        }
+
+        public String getServerUrl() {
+            return serverUrl;
+        }
+
+        public void setServerUrl(String serverUrl) {
+            this.serverUrl = serverUrl;
+        }
+    }
+
+    /**
+     * 客户端访问控制属性。
+     */
+    public static class ClientAccessProperties {
+
+        /** 允许访问的路径列表 */
+        private List<String> paths = new ArrayList<>();
+
+        public List<String> getPaths() {
+            return paths;
+        }
+
+        public void setPaths(List<String> paths) {
+            this.paths = paths != null ? paths : new ArrayList<>();
+        }
+    }
+}

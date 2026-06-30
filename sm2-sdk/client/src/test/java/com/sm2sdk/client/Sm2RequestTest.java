@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -172,7 +173,7 @@ class Sm2RequestTest {
 
         Sm2Request request = new Sm2Request("POST", "/api/create", config, sessionManager,
                 objectMapper, SESSION_ID);
-        request.body(Map.of("name", "test"));
+        request.body(Collections.singletonMap("name", "test"));
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);
@@ -238,7 +239,7 @@ class Sm2RequestTest {
 
         Sm2Request request = new Sm2Request("PUT", "/api/update", config, sessionManager,
                 objectMapper, SESSION_ID);
-        request.body(Map.of("field", "value"));
+        request.body(Collections.singletonMap("field", "value"));
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);

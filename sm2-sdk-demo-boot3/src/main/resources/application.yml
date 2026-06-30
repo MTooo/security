@@ -1,0 +1,8 @@
+sm2:
+  sdk:
+    sm2-private-key: "${SM2_PRIVATE_KEY:your-private-key-hex}"
+    sm2-public-key: "${SM2_PUBLIC_KEY:your-public-key-hex}"
+    server-url: "${SM2_SERVER_URL:https://peer.example.com}"
+    session-timeout-ms: 600000
+server:
+  port: 8080
