@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.sm2sdk.core.exception.ErrorCodeTest" time="0.063" tests="40" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="17"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="GBK"/>
+    <property name="java.class.path" value="D:\workspace\security\sm2-sdk\core\target\test-classes;D:\workspace\security\sm2-sdk\core\target\classes;C:\Users\oubin\.m2\repository\cn\hutool\hutool-all\5.8.32\hutool-all-5.8.32.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.15.4\jackson-databind-2.15.4.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.15.4\jackson-annotations-2.15.4.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.15.4\jackson-core-2.15.4.jar;C:\Users\oubin\.m2\repository\com\github\ben-manes\caffeine\caffeine\2.9.3\caffeine-2.9.3.jar;C:\Users\oubin\.m2\repository\org\checkerframework\checker-qual\3.19.0\checker-qual-3.19.0.jar;C:\Users\oubin\.m2\repository\com\google\errorprone\error_prone_annotations\2.10.0\error_prone_annotations-2.10.0.jar;C:\Users\oubin\.m2\repository\org\slf4j\slf4j-api\2.0.9\slf4j-api-2.0.9.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.1\junit-jupiter-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.1\junit-jupiter-api-5.10.1.jar;C:\Users\oubin\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\oubin\.m2\repository\org\junit\platform\junit-platform-commons\1.10.1\junit-platform-commons-1.10.1.jar;C:\Users\oubin\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.1\junit-jupiter-params-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.1\junit-jupiter-engine-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\platform\junit-platform-engine\1.10.1\junit-platform-engine-1.10.1.jar;C:\Users\oubin\.m2\repository\org\mockito\mockito-core\5.8.0\mockito-core-5.8.0.jar;C:\Users\oubin\.m2\repository\net\bytebuddy\byte-buddy\1.14.10\byte-buddy-1.14.10.jar;C:\Users\oubin\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.10\byte-buddy-agent-1.14.10.jar;C:\Users\oubin\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://java.oracle.com/"/>
+    <property name="user.timezone" value="Asia/Shanghai"/>
+    <property name="os.name" value="Windows 10"/>
+    <property name="java.vm.specification.version" value="17"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="CN"/>
+    <property name="sun.boot.library.path" value="D:\code-tools\java17\bin"/>
+    <property name="sun.java.command" value="C:\Users\oubin\AppData\Local\Temp\surefire12853785255690581682\surefirebooter-20260630100439745_3.jar C:\Users\oubin\AppData\Local\Temp\surefire12853785255690581682 2026-06-30T10-04-39_586-jvmRun1 surefire-20260630100439745_1tmp surefire_0-20260630100439745_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="test" value="ErrorCodeTest"/>
+    <property name="surefire.test.class.path" value="D:\workspace\security\sm2-sdk\core\target\test-classes;D:\workspace\security\sm2-sdk\core\target\classes;C:\Users\oubin\.m2\repository\cn\hutool\hutool-all\5.8.32\hutool-all-5.8.32.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.15.4\jackson-databind-2.15.4.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.15.4\jackson-annotations-2.15.4.jar;C:\Users\oubin\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.15.4\jackson-core-2.15.4.jar;C:\Users\oubin\.m2\repository\com\github\ben-manes\caffeine\caffeine\2.9.3\caffeine-2.9.3.jar;C:\Users\oubin\.m2\repository\org\checkerframework\checker-qual\3.19.0\checker-qual-3.19.0.jar;C:\Users\oubin\.m2\repository\com\google\errorprone\error_prone_annotations\2.10.0\error_prone_annotations-2.10.0.jar;C:\Users\oubin\.m2\repository\org\slf4j\slf4j-api\2.0.9\slf4j-api-2.0.9.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.1\junit-jupiter-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.1\junit-jupiter-api-5.10.1.jar;C:\Users\oubin\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\oubin\.m2\repository\org\junit\platform\junit-platform-commons\1.10.1\junit-platform-commons-1.10.1.jar;C:\Users\oubin\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.1\junit-jupiter-params-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.1\junit-jupiter-engine-5.10.1.jar;C:\Users\oubin\.m2\repository\org\junit\platform\junit-platform-engine\1.10.1\junit-platform-engine-1.10.1.jar;C:\Users\oubin\.m2\repository\org\mockito\mockito-core\5.8.0\mockito-core-5.8.0.jar;C:\Users\oubin\.m2\repository\net\bytebuddy\byte-buddy\1.14.10\byte-buddy-1.14.10.jar;C:\Users\oubin\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.10\byte-buddy-agent-1.14.10.jar;C:\Users\oubin\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\oubin"/>
+    <property name="user.language" value="zh"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2024-10-15"/>
+    <property name="java.home" value="D:\code-tools\java17"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="D:\workspace\security\sm2-sdk\core"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="surefire.real.class.path" value="C:\Users\oubin\AppData\Local\Temp\surefire12853785255690581682\surefirebooter-20260630100439745_3.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="17.0.13+10-LTS-268"/>
+    <property name="user.name" value="oubin"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="file.encoding" value="GBK"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="localRepository" value="C:\Users\oubin\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
+    <property name="java.io.tmpdir" value="C:\Users\oubin\AppData\Local\Temp\"/>
+    <property name="java.version" value="17.0.13"/>
+    <property name="user.dir" value="D:\workspace\security\sm2-sdk\core"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="native.encoding" value="GBK"/>
+    <property name="java.library.path" value="D:\code-tools\java17\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:\Users\oubin\bin;D:\code-tools\Git\mingw64\bin;D:\code-tools\Git\usr\local\bin;D:\code-tools\Git\usr\bin;D:\code-tools\Git\usr\bin;D:\code-tools\Git\mingw64\bin;D:\code-tools\Git\usr\bin;C:\Users\oubin\bin;C:\Program Files\Common Files\Oracle\Java\javapath;D:\code-tools\Python311\Scripts;D:\code-tools\Python311;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32\OpenSSH;C:\Program Files\CMITControlCenter;D:\code-tools\Git\cmd;D:\code-tools\fnm-windows;D:\code-tools\influxdb2-client-2.7.5-windows-amd64;C:\Program Files\dotnet;D:\code-tools\Erlang OTP\bin;D:\tools\北信源\CEMS;D:\code-tools\apache-maven-3.9.11\bin;D:\code-tools\微信web开发者工具\dll;D:\code-tools\mysql-8.0.41-winx64\bin;D:\code-tools\java17\bin;D:\code-tools\java17\jre\bin;D:\code-tools\nvm;C:\nvm4w\nodejs;C:\Program Files\WindowsPowerShell\Scripts;C:\Users\oubin\AppData\Local\codegraph\current\bin;D:\code-tools\Trae CN\bin;C:\Users\oubin\AppData\Local\Microsoft\WindowsApps;D:\code-tools\IntelliJ IDEA 2026.1.1\bin;C:\Users\oubin\.local\bin;%LOCALAPPDATA%\Microsoft\WindowsApps;%LOCALAPPDATA%\Microsoft\WindowsApps;D:\code-tools\Git\usr\bin\vendor_perl;D:\code-tools\Git\usr\bin\core_perl;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\frontend-design\f7b31235e6f0\bin;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\superpowers\6.0.3\bin;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\code-review\f7b31235e6f0\bin;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\context7\f7b31235e6f0\bin;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\playwright\f7b31235e6f0\bin;C:\Users\oubin\.claude\plugins\cache\claude-plugins-official\code-simplifier\1.0.0\bin;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="java.vm.version" value="17.0.13+10-LTS-268"/>
+    <property name="java.specification.maintenance.version" value="1"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="61.0"/>
+  </properties>
+  <testcase name="ivReuse" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.016"/>
+  <testcase name="sessionNotFoundOrExpired" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="clientTempPubkeyInvalid" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="serverPubkeyNotConfigured" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="timestampDeviationExceeded" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="shouldHaveAll35ErrorCodes" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sm4DecryptTagFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sessionTampered" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="networkConnectionFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="shouldHaveUniqueCodes" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="unknownError" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sessionCountExceeded" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="keyConfirmFailedSa" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="keyConfirmFailedSb" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="serverCertVerifyFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="decryptSessionKeyMissing" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="requestRateLimitExceeded" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="memoryCleanupFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="shouldMapHttpStatus" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="httpRequestFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="shouldExtractSeverity" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="keyFileReadFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="threadPoolFull" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="clientPrivateKeyNotConfigured" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="clientInitFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sessionExpired" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="sessionRequestLimitExceeded" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="tempPubkeyGenFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="localSignGenFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="serverTempPubkeyNotOnCurve" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="signatureVerifyFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="nonceReplay" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="allCodesShouldBeExactlyFiveDigits" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sessionStateInvalid" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="duplicateHandshakeRequest" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sm4EncryptFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="clientCertVerifyFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="handshakeTimeout" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+  <testcase name="circuitBreakerTripped" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.0"/>
+  <testcase name="sharedSecretCalcFailed" classname="com.sm2sdk.core.exception.ErrorCodeTest" time="0.001"/>
+</testsuite>
