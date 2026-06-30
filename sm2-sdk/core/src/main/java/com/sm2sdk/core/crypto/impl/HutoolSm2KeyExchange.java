@@ -1,7 +1,7 @@
 package com.sm2sdk.core.crypto.impl;
 
 import cn.hutool.crypto.SmUtil;
-import cn.hutool.crypto.digest.SM3;
+import cn.hutool.crypto.asymmetric.SM2;
 import com.sm2sdk.core.crypto.KeyDerivation;
 import com.sm2sdk.core.crypto.MemoryCleanUtil;
 import com.sm2sdk.core.crypto.Sm2KeyExchange;
@@ -15,7 +15,6 @@ import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.*;
-import org.bouncycastle.crypto.signers.SM2Signer;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
@@ -233,22 +232,21 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
     }
 
     /**
-     * 使用客户端静态私钥签名指定的消息。
+     * 使用客户端静态私钥对消息进行 SM2 签名。
+     *
+     * <p>使用 Hutool SM2 的 {@code sign(data, id)} 方法，
+     * 支持 GB/T 32918 标准的自定义身份标识（ID），内部使用 BouncyCastle SM2Signer。
      *
      * @param privateKey 客户端静态私钥原始字节
      * @param data       待签名数据
-     * @param ida        SM2 签名使用的身份标识
+     * @param ida        SM2 签名使用的身份标识字节
      * @return DER 编码的 SM2 签名
      */
     private static byte[] sign(byte[] privateKey, byte[] data, byte[] ida) {
         try {
-            BigInteger d = new BigInteger(1, privateKey);
-            ECPrivateKeyParameters privParams = new ECPrivateKeyParameters(d, DOMAIN);
-            SM2Signer signer = new SM2Signer();
-            signer.init(true, new ParametersWithID(
-                    new ParametersWithRandom(privParams, SECURE_RANDOM), ida));
-            signer.update(data, 0, data.length);
-            return signer.generateSignature();
+            // 使用 Hutool SM2 签名，传入私钥和自定义身份标识
+            SM2 sm2 = SmUtil.sm2(privateKey, null);
+            return sm2.sign(data, ida);
         } catch (Exception e) {
             throw new Sm2SdkException(ErrorCode.LOCAL_SIGN_GEN_FAILED,
                     "SM2 签名失败: " + e.getMessage(), e);
@@ -256,21 +254,21 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
     }
 
     /**
-     * 使用客户端静态公钥验证签名。
+     * 使用客户端静态公钥验证 SM2 签名。
      *
-     * @param publicKey 客户端静态公钥原始字节（非压缩格式）
+     * <p>使用 Hutool SM2 的 {@code verify(data, signature, id)} 方法，
+     * 支持 GB/T 32918 标准的自定义身份标识（ID），内部使用 BouncyCastle SM2Signer。
+     *
+     * @param publicKey 客户端静态公钥原始字节（非压缩格式 04||x||y）
      * @param data      已签名数据
      * @param signature DER 编码的 SM2 签名
-     * @param ida       SM2 签名使用的身份标识
+     * @param ida       SM2 签名使用的身份标识字节
      * @return 签名有效返回 true
      */
     private static boolean verify(byte[] publicKey, byte[] data, byte[] signature, byte[] ida) {
-        ECPoint q = CURVE.decodePoint(publicKey);
-        ECPublicKeyParameters pubParams = new ECPublicKeyParameters(q, DOMAIN);
-        SM2Signer verifier = new SM2Signer();
-        verifier.init(false, new ParametersWithID(pubParams, ida));
-        verifier.update(data, 0, data.length);
-        return verifier.verifySignature(signature);
+        // 使用 Hutool SM2 验签，传入公钥和自定义身份标识
+        SM2 sm2 = SmUtil.sm2(null, publicKey);
+        return sm2.verify(data, signature, ida);
     }
 
     /**
