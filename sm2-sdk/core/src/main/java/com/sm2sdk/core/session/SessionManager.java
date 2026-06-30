@@ -415,6 +415,62 @@ public class SessionManager {
 
     // ==================== 内部辅助方法 ====================
 
+    // ==================== 密钥交换访问 ====================
+
+    /**
+     * 获取 SM2 密钥交换实现，用于构建和处理握手消息。
+     *
+     * <p>客户端发起握手时需要先调用 {@link Sm2KeyExchange#buildInitRequest} 构建
+     * {@link com.sm2sdk.core.model.HandshakeInit}，发送到服务端后，再调用
+     * {@link Sm2KeyExchange#processServerResponse} 处理响应，最后调用
+     * {@link Sm2KeyExchange#buildConfirm} 构建确认消息。
+     *
+     * @return SM2 密钥交换实现
+     */
+    public Sm2KeyExchange getKeyExchange() {
+        return keyExchange;
+    }
+
+    /**
+     * 从密钥交换结果创建会话并存入存储。
+     *
+     * <p>此方法适用于客户端自行完成握手流程（构建 Init、发送、接收响应、处理响应、
+     * 构建并发送 Confirm）后，将得到的 {@link Sm2KeyExchange.HandshakeResult}
+     * 交由 SessionManager 创建和管理会话。
+     *
+     * <p>会话创建完成后，会缓存共享密钥（用于后续续期），与会话一起存入存储。
+     *
+     * @param peerId 对端标识
+     * @param result 密钥交换结果（包含派生的 SM4 密钥、IV 和会话 ID）
+     * @return 创建的会话
+     * @throws Sm2SdkException 如果会话创建失败
+     */
+    public Session createSession(String peerId, Sm2KeyExchange.HandshakeResult result) {
+        Objects.requireNonNull(peerId, "peerId must not be null");
+        Objects.requireNonNull(result, "result must not be null");
+
+        String sessionId = result.getSessionId() != null
+                ? result.getSessionId()
+                : SecureRandomUtil.generateUUID();
+
+        Session session = new Session(
+                sessionId, peerId, peerId,
+                result.getSm4Key(), result.getSm4Iv(),
+                System.currentTimeMillis(),
+                config.getMaxSessionLifetimeMs(),
+                config.getMaxSessionRequests());
+
+        // 缓存共享密钥（用于后续续期）
+        if (result.getSharedKey() != null) {
+            sharedKeyCache.put(session.getSessionId(), result.getSharedKey().clone());
+        }
+
+        sessionStore.put(session);
+        return session;
+    }
+
+    // ==================== 内部辅助方法 ====================
+
     /**
      * 查找对端配置。
      *
@@ -437,7 +493,7 @@ public class SessionManager {
      * @param hex 十六进制字符串（可包含非十六进制字符，会被自动过滤）
      * @return 字节数组（输入为 null 或空时返回空数组）
      */
-    private static byte[] hexToBytes(String hex) {
+    public static byte[] hexToBytes(String hex) {
         if (hex == null || hex.isEmpty()) {
             return new byte[0];
         }
