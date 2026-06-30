@@ -1,0 +1,290 @@
+# Review package: 10b7bcf2be889b359e0e4e2e8d6a043cbda85435..HEAD
+
+## Commits
+f3cdac4 feat: create client, server, and starter module POMs with shade plugin
+
+## Files changed
+ sm2-sdk/client/pom.xml  |  47 +++++++++++++++++++++
+ sm2-sdk/server/pom.xml  |  75 +++++++++++++++++++++++++++++++++
+ sm2-sdk/starter/pom.xml | 108 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 230 insertions(+)
+
+## Diff
+diff --git a/sm2-sdk/client/pom.xml b/sm2-sdk/client/pom.xml
+index 474a550..0a9fae0 100644
+--- a/sm2-sdk/client/pom.xml
++++ b/sm2-sdk/client/pom.xml
+@@ -9,11 +9,58 @@
+         <artifactId>sm2-sdk-parent</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+     <artifactId>sm2-sdk-client</artifactId>
+     <packaging>jar</packaging>
+ 
+     <name>SM2 SDK - Client</name>
+     <description>SM2 Security Data Exchange SDK - Client Module</description>
++
++    <dependencies>
++        <!-- Core module -->
++        <dependency>
++            <groupId>com.sm2sdk</groupId>
++            <artifactId>sm2-sdk-core</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++
++        <!-- SLF4J - logging facade -->
++        <dependency>
++            <groupId>org.slf4j</groupId>
++            <artifactId>slf4j-api</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- JUnit 5 - testing -->
++        <dependency>
++            <groupId>org.junit.jupiter</groupId>
++            <artifactId>junit-jupiter</artifactId>
++            <scope>test</scope>
++        </dependency>
++
++        <!-- Mockito - mocking -->
++        <dependency>
++            <groupId>org.mockito</groupId>
++            <artifactId>mockito-core</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-compiler-plugin</artifactId>
++            </plugin>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-surefire-plugin</artifactId>
++            </plugin>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-source-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
+ </project>
+diff --git a/sm2-sdk/server/pom.xml b/sm2-sdk/server/pom.xml
+index 8f968db..e497ef9 100644
+--- a/sm2-sdk/server/pom.xml
++++ b/sm2-sdk/server/pom.xml
+@@ -9,11 +9,86 @@
+         <artifactId>sm2-sdk-parent</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+     <artifactId>sm2-sdk-server</artifactId>
+     <packaging>jar</packaging>
+ 
+     <name>SM2 SDK - Server</name>
+     <description>SM2 Security Data Exchange SDK - Server Module</description>
++
++    <dependencies>
++        <!-- Core module -->
++        <dependency>
++            <groupId>com.sm2sdk</groupId>
++            <artifactId>sm2-sdk-core</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++
++        <!-- javax.servlet-api -->
++        <dependency>
++            <groupId>javax.servlet</groupId>
++            <artifactId>javax.servlet-api</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- jakarta.servlet-api -->
++        <dependency>
++            <groupId>jakarta.servlet</groupId>
++            <artifactId>jakarta.servlet-api</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- Spring Web -->
++        <dependency>
++            <groupId>org.springframework</groupId>
++            <artifactId>spring-web</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- Spring Context -->
++        <dependency>
++            <groupId>org.springframework</groupId>
++            <artifactId>spring-context</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- SLF4J - logging facade -->
++        <dependency>
++            <groupId>org.slf4j</groupId>
++            <artifactId>slf4j-api</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- JUnit 5 - testing -->
++        <dependency>
++            <groupId>org.junit.jupiter</groupId>
++            <artifactId>junit-jupiter</artifactId>
++            <scope>test</scope>
++        </dependency>
++
++        <!-- Mockito - mocking -->
++        <dependency>
++            <groupId>org.mockito</groupId>
++            <artifactId>mockito-core</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-compiler-plugin</artifactId>
++            </plugin>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-surefire-plugin</artifactId>
++            </plugin>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-source-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
+ </project>
+diff --git a/sm2-sdk/starter/pom.xml b/sm2-sdk/starter/pom.xml
+index 61ff4c0..2a7fda0 100644
+--- a/sm2-sdk/starter/pom.xml
++++ b/sm2-sdk/starter/pom.xml
+@@ -9,11 +9,119 @@
+         <artifactId>sm2-sdk-parent</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+     <artifactId>sm2-sdk-spring-boot-starter</artifactId>
+     <packaging>jar</packaging>
+ 
+     <name>SM2 SDK - Starter</name>
+     <description>SM2 Security Data Exchange SDK - Spring Boot Starter Module</description>
++
++    <dependencies>
++        <!-- Core module -->
++        <dependency>
++            <groupId>com.sm2sdk</groupId>
++            <artifactId>sm2-sdk-core</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++
++        <!-- Client module -->
++        <dependency>
++            <groupId>com.sm2sdk</groupId>
++            <artifactId>sm2-sdk-client</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++
++        <!-- Server module -->
++        <dependency>
++            <groupId>com.sm2sdk</groupId>
++            <artifactId>sm2-sdk-server</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++
++        <!-- Spring Boot Autoconfigure -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-autoconfigure</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- Spring Boot Configuration Processor -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-configuration-processor</artifactId>
++            <scope>provided</scope>
++            <optional>true</optional>
++        </dependency>
++
++        <!-- Spring Data Redis -->
++        <dependency>
++            <groupId>org.springframework.data</groupId>
++            <artifactId>spring-data-redis</artifactId>
++            <scope>provided</scope>
++            <optional>true</optional>
++        </dependency>
++
++        <!-- JUnit 5 - testing -->
++        <dependency>
++            <groupId>org.junit.jupiter</groupId>
++            <artifactId>junit-jupiter</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-compiler-plugin</artifactId>
++            </plugin>
++
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-shade-plugin</artifactId>
++                <executions>
++                    <execution>
++                        <phase>package</phase>
++                        <goals>
++                            <goal>shade</goal>
++                        </goals>
++                        <configuration>
++                            <createDependencyReducedPom>true</createDependencyReducedPom>
++                            <relocations>
++                                <relocation>
++                                    <pattern>cn.hutool</pattern>
++                                    <shadedPattern>com.sm2sdk.third.hutool</shadedPattern>
++                                </relocation>
++                                <relocation>
++                                    <pattern>com.fasterxml.jackson</pattern>
++                                    <shadedPattern>com.sm2sdk.third.jackson</shadedPattern>
++                                </relocation>
++                            </relocations>
++                            <filters>
++                                <filter>
++                                    <artifact>*:*</artifact>
++                                    <excludes>
++                                        <exclude>META-INF/*.SF</exclude>
++                                        <exclude>META-INF/*.DSA</exclude>
++                                        <exclude>META-INF/*.RSA</exclude>
++                                    </excludes>
++                                </filter>
++                            </filters>
++                        </configuration>
++                    </execution>
++                </executions>
++            </plugin>
++
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-surefire-plugin</artifactId>
++            </plugin>
++
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-source-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
+ </project>

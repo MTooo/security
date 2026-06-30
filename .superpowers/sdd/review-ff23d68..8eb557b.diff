@@ -1,0 +1,1477 @@
+# Review package: ff23d6825109f407eb89120b7e56200cd3f6ac8f..HEAD
+
+## Commits
+8eb557b feat: add Session, Handshake DTOs, and Sm2SdkConfig model classes
+
+## Files changed
+ .../com/sm2sdk/core/model/HandshakeConfirm.java    |  57 +++
+ .../java/com/sm2sdk/core/model/HandshakeInit.java  | 105 +++++
+ .../com/sm2sdk/core/model/HandshakeServerResp.java |  69 +++
+ .../java/com/sm2sdk/core/model/Sm2SdkConfig.java   | 425 ++++++++++++++++++
+ .../main/java/com/sm2sdk/core/session/Session.java | 286 ++++++++++++
+ .../java/com/sm2sdk/core/session/SessionTest.java  | 484 +++++++++++++++++++++
+ 6 files changed, 1426 insertions(+)
+
+## Diff
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeConfirm.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeConfirm.java
+new file mode 100644
+index 0000000..d8e2a3d
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeConfirm.java
+@@ -0,0 +1,57 @@
++package com.sm2sdk.core.model;
++
++/**
++ * Client-to-server handshake confirmation message.
++ *
++ * <p>Sent by the client after verifying the server's {@link HandshakeServerResp}.
++ * Contains the session identifier and the SA confirmation value proving key
++ * possession.
++ *
++ * <p>The confirmation value is stored as a Base64-encoded string matching the
++ * Section 2.2 wire format.
++ */
++public class HandshakeConfirm {
++
++    private String sessionId;
++    private String confirmation;
++
++    /** No-arg constructor for JSON deserialisation. */
++    public HandshakeConfirm() {
++    }
++
++    /**
++     * Constructs a fully populated handshake confirmation.
++     *
++     * @param sessionId    the session identifier
++     * @param confirmation the SA confirmation value, Base64-encoded
++     */
++    public HandshakeConfirm(String sessionId, String confirmation) {
++        this.sessionId = sessionId;
++        this.confirmation = confirmation;
++    }
++
++    // ========== Getters / Setters ==========
++
++    public String getSessionId() {
++        return sessionId;
++    }
++
++    public void setSessionId(String sessionId) {
++        this.sessionId = sessionId;
++    }
++
++    public String getConfirmation() {
++        return confirmation;
++    }
++
++    public void setConfirmation(String confirmation) {
++        this.confirmation = confirmation;
++    }
++
++    @Override
++    public String toString() {
++        return "HandshakeConfirm{" +
++                "sessionId='" + sessionId + '\'' +
++                '}';
++    }
++}
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeInit.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeInit.java
+new file mode 100644
+index 0000000..d008629
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeInit.java
+@@ -0,0 +1,105 @@
++package com.sm2sdk.core.model;
++
++/**
++ * Client-to-server handshake initiation message.
++ *
++ * <p>Carries the client's protocol version, identity, ephemeral public key,
++ * timestamp, signature, and ZA value — all as plain/String fields suitable for
++ * JSON serialisation/deserialisation with Jackson.
++ *
++ * <p>Binary values (ephemeral public key, signature, ZA) are stored as
++ * Base64-encoded strings matching the Section 2.2 wire format.
++ */
++public class HandshakeInit {
++
++    private String protocolVersion;
++    private String clientId;
++    private String ephemeralPublicKey;
++    private long timestamp;
++    private String signature;
++    private String ZA;
++
++    /** No-arg constructor for JSON deserialisation. */
++    public HandshakeInit() {
++    }
++
++    /**
++     * Constructs a fully populated handshake initiation.
++     *
++     * @param protocolVersion    the protocol version string (e.g. "1.0")
++     * @param clientId           the client identifier
++     * @param ephemeralPublicKey the client's ephemeral public key, Base64-encoded
++     * @param timestamp          the request timestamp in epoch millis
++     * @param signature          the client's signature, Base64-encoded
++     * @param ZA                 the client's ZA value, Base64-encoded
++     */
++    public HandshakeInit(String protocolVersion, String clientId,
++                         String ephemeralPublicKey, long timestamp,
++                         String signature, String ZA) {
++        this.protocolVersion = protocolVersion;
++        this.clientId = clientId;
++        this.ephemeralPublicKey = ephemeralPublicKey;
++        this.timestamp = timestamp;
++        this.signature = signature;
++        this.ZA = ZA;
++    }
++
++    // ========== Getters / Setters ==========
++
++    public String getProtocolVersion() {
++        return protocolVersion;
++    }
++
++    public void setProtocolVersion(String protocolVersion) {
++        this.protocolVersion = protocolVersion;
++    }
++
++    public String getClientId() {
++        return clientId;
++    }
++
++    public void setClientId(String clientId) {
++        this.clientId = clientId;
++    }
++
++    public String getEphemeralPublicKey() {
++        return ephemeralPublicKey;
++    }
++
++    public void setEphemeralPublicKey(String ephemeralPublicKey) {
++        this.ephemeralPublicKey = ephemeralPublicKey;
++    }
++
++    public long getTimestamp() {
++        return timestamp;
++    }
++
++    public void setTimestamp(long timestamp) {
++        this.timestamp = timestamp;
++    }
++
++    public String getSignature() {
++        return signature;
++    }
++
++    public void setSignature(String signature) {
++        this.signature = signature;
++    }
++
++    public String getZA() {
++        return ZA;
++    }
++
++    public void setZA(String ZA) {
++        this.ZA = ZA;
++    }
++
++    @Override
++    public String toString() {
++        return "HandshakeInit{" +
++                "protocolVersion='" + protocolVersion + '\'' +
++                ", clientId='" + clientId + '\'' +
++                ", timestamp=" + timestamp +
++                '}';
++    }
++}
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeServerResp.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeServerResp.java
+new file mode 100644
+index 0000000..0d0d90a
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/HandshakeServerResp.java
+@@ -0,0 +1,69 @@
++package com.sm2sdk.core.model;
++
++/**
++ * Server-to-client handshake response message.
++ *
++ * <p>Sent by the server after validating the client's {@link HandshakeInit}.
++ * Contains the session identifier, the server's ephemeral public key, and the
++ * SB confirmation value.
++ *
++ * <p>Binary values (ephemeral public key, confirmation) are stored as
++ * Base64-encoded strings matching the Section 2.2 wire format.
++ */
++public class HandshakeServerResp {
++
++    private String sessionId;
++    private String ephemeralPublicKey;
++    private String confirmation;
++
++    /** No-arg constructor for JSON deserialisation. */
++    public HandshakeServerResp() {
++    }
++
++    /**
++     * Constructs a fully populated handshake server response.
++     *
++     * @param sessionId          the assigned session identifier
++     * @param ephemeralPublicKey the server's ephemeral public key, Base64-encoded
++     * @param confirmation       the SB confirmation value, Base64-encoded
++     */
++    public HandshakeServerResp(String sessionId, String ephemeralPublicKey,
++                               String confirmation) {
++        this.sessionId = sessionId;
++        this.ephemeralPublicKey = ephemeralPublicKey;
++        this.confirmation = confirmation;
++    }
++
++    // ========== Getters / Setters ==========
++
++    public String getSessionId() {
++        return sessionId;
++    }
++
++    public void setSessionId(String sessionId) {
++        this.sessionId = sessionId;
++    }
++
++    public String getEphemeralPublicKey() {
++        return ephemeralPublicKey;
++    }
++
++    public void setEphemeralPublicKey(String ephemeralPublicKey) {
++        this.ephemeralPublicKey = ephemeralPublicKey;
++    }
++
++    public String getConfirmation() {
++        return confirmation;
++    }
++
++    public void setConfirmation(String confirmation) {
++        this.confirmation = confirmation;
++    }
++
++    @Override
++    public String toString() {
++        return "HandshakeServerResp{" +
++                "sessionId='" + sessionId + '\'' +
++                '}';
++    }
++}
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/Sm2SdkConfig.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/Sm2SdkConfig.java
+new file mode 100644
+index 0000000..02730b8
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/model/Sm2SdkConfig.java
+@@ -0,0 +1,425 @@
++package com.sm2sdk.core.model;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import java.util.Objects;
++
++/**
++ * Configuration POJO for the SM2 SDK.
++ *
++ * <p>Uses the builder pattern for construction. All fields have sensible defaults
++ * where applicable. Fluent setters ({@code withXxx}) are provided for use in
++ * configuration frameworks (Spring, etc.).
++ *
++ * <p>Contains inner classes for per-peer configuration ({@link PeerConfig}) and
++ * client access control ({@link ClientAccessConfig}).
++ */
++public class Sm2SdkConfig {
++
++    // ========== Defaults ==========
++
++    /** Default handshake timeout: 10 seconds. */
++    public static final long DEFAULT_HANDSHAKE_TIMEOUT_MS = 10_000L;
++
++    /** Default session idle timeout: 5 minutes. */
++    public static final long DEFAULT_SESSION_TIMEOUT_MS = 300_000L;
++
++    /** Default maximum session lifetime: 1 hour. */
++    public static final long DEFAULT_MAX_SESSION_LIFETIME_MS = 3_600_000L;
++
++    /** Default maximum requests per session. */
++    public static final int DEFAULT_MAX_SESSION_REQUESTS = 1000;
++
++    /** Default maximum concurrent sessions. */
++    public static final int DEFAULT_MAX_SESSIONS = 10000;
++
++    /** Default session cleanup interval: 1 minute. */
++    public static final long DEFAULT_SESSION_CLEANUP_INTERVAL_MS = 60_000L;
++
++    // ========== Fields ==========
++
++    private String sm2PrivateKey;
++    private String sm2PublicKey;
++    private String serverUrl;
++    private long handshakeTimeoutMs = DEFAULT_HANDSHAKE_TIMEOUT_MS;
++    private long sessionTimeoutMs = DEFAULT_SESSION_TIMEOUT_MS;
++    private long maxSessionLifetimeMs = DEFAULT_MAX_SESSION_LIFETIME_MS;
++    private int maxSessionRequests = DEFAULT_MAX_SESSION_REQUESTS;
++    private int maxSessions = DEFAULT_MAX_SESSIONS;
++    private long sessionCleanupIntervalMs = DEFAULT_SESSION_CLEANUP_INTERVAL_MS;
++    private List<PeerConfig> peerConfigs = new ArrayList<>();
++    private ClientAccessConfig clientAccessConfig;
++
++    /** Creates a new {@link Sm2SdkConfig} with default values. */
++    public Sm2SdkConfig() {
++    }
++
++    // ========== Getters / Setters ==========
++
++    public String getSm2PrivateKey() {
++        return sm2PrivateKey;
++    }
++
++    public void setSm2PrivateKey(String sm2PrivateKey) {
++        this.sm2PrivateKey = sm2PrivateKey;
++    }
++
++    public String getSm2PublicKey() {
++        return sm2PublicKey;
++    }
++
++    public void setSm2PublicKey(String sm2PublicKey) {
++        this.sm2PublicKey = sm2PublicKey;
++    }
++
++    public String getServerUrl() {
++        return serverUrl;
++    }
++
++    public void setServerUrl(String serverUrl) {
++        this.serverUrl = serverUrl;
++    }
++
++    public long getHandshakeTimeoutMs() {
++        return handshakeTimeoutMs;
++    }
++
++    public void setHandshakeTimeoutMs(long handshakeTimeoutMs) {
++        this.handshakeTimeoutMs = handshakeTimeoutMs;
++    }
++
++    public long getSessionTimeoutMs() {
++        return sessionTimeoutMs;
++    }
++
++    public void setSessionTimeoutMs(long sessionTimeoutMs) {
++        this.sessionTimeoutMs = sessionTimeoutMs;
++    }
++
++    public long getMaxSessionLifetimeMs() {
++        return maxSessionLifetimeMs;
++    }
++
++    public void setMaxSessionLifetimeMs(long maxSessionLifetimeMs) {
++        this.maxSessionLifetimeMs = maxSessionLifetimeMs;
++    }
++
++    public int getMaxSessionRequests() {
++        return maxSessionRequests;
++    }
++
++    public void setMaxSessionRequests(int maxSessionRequests) {
++        this.maxSessionRequests = maxSessionRequests;
++    }
++
++    public int getMaxSessions() {
++        return maxSessions;
++    }
++
++    public void setMaxSessions(int maxSessions) {
++        this.maxSessions = maxSessions;
++    }
++
++    public long getSessionCleanupIntervalMs() {
++        return sessionCleanupIntervalMs;
++    }
++
++    public void setSessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
++        this.sessionCleanupIntervalMs = sessionCleanupIntervalMs;
++    }
++
++    public List<PeerConfig> getPeerConfigs() {
++        return peerConfigs;
++    }
++
++    public void setPeerConfigs(List<PeerConfig> peerConfigs) {
++        this.peerConfigs = peerConfigs != null ? new ArrayList<>(peerConfigs) : new ArrayList<>();
++    }
++
++    public ClientAccessConfig getClientAccessConfig() {
++        return clientAccessConfig;
++    }
++
++    public void setClientAccessConfig(ClientAccessConfig clientAccessConfig) {
++        this.clientAccessConfig = clientAccessConfig;
++    }
++
++    // ========== Fluent Setters ==========
++
++    public Sm2SdkConfig withSm2PrivateKey(String sm2PrivateKey) {
++        this.sm2PrivateKey = sm2PrivateKey;
++        return this;
++    }
++
++    public Sm2SdkConfig withSm2PublicKey(String sm2PublicKey) {
++        this.sm2PublicKey = sm2PublicKey;
++        return this;
++    }
++
++    public Sm2SdkConfig withServerUrl(String serverUrl) {
++        this.serverUrl = serverUrl;
++        return this;
++    }
++
++    public Sm2SdkConfig withHandshakeTimeoutMs(long handshakeTimeoutMs) {
++        this.handshakeTimeoutMs = handshakeTimeoutMs;
++        return this;
++    }
++
++    public Sm2SdkConfig withSessionTimeoutMs(long sessionTimeoutMs) {
++        this.sessionTimeoutMs = sessionTimeoutMs;
++        return this;
++    }
++
++    public Sm2SdkConfig withMaxSessionLifetimeMs(long maxSessionLifetimeMs) {
++        this.maxSessionLifetimeMs = maxSessionLifetimeMs;
++        return this;
++    }
++
++    public Sm2SdkConfig withMaxSessionRequests(int maxSessionRequests) {
++        this.maxSessionRequests = maxSessionRequests;
++        return this;
++    }
++
++    public Sm2SdkConfig withMaxSessions(int maxSessions) {
++        this.maxSessions = maxSessions;
++        return this;
++    }
++
++    public Sm2SdkConfig withSessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
++        this.sessionCleanupIntervalMs = sessionCleanupIntervalMs;
++        return this;
++    }
++
++    public Sm2SdkConfig withPeerConfigs(List<PeerConfig> peerConfigs) {
++        this.peerConfigs = peerConfigs != null ? new ArrayList<>(peerConfigs) : new ArrayList<>();
++        return this;
++    }
++
++    public Sm2SdkConfig withClientAccessConfig(ClientAccessConfig clientAccessConfig) {
++        this.clientAccessConfig = clientAccessConfig;
++        return this;
++    }
++
++    // ========== Builder ==========
++
++    public static Builder builder() {
++        return new Builder();
++    }
++
++    /**
++     * Builder for {@link Sm2SdkConfig}.
++     */
++    public static final class Builder {
++        private final Sm2SdkConfig config = new Sm2SdkConfig();
++
++        private Builder() {
++        }
++
++        public Builder sm2PrivateKey(String sm2PrivateKey) {
++            config.setSm2PrivateKey(sm2PrivateKey);
++            return this;
++        }
++
++        public Builder sm2PublicKey(String sm2PublicKey) {
++            config.setSm2PublicKey(sm2PublicKey);
++            return this;
++        }
++
++        public Builder serverUrl(String serverUrl) {
++            config.setServerUrl(serverUrl);
++            return this;
++        }
++
++        public Builder handshakeTimeoutMs(long handshakeTimeoutMs) {
++            config.setHandshakeTimeoutMs(handshakeTimeoutMs);
++            return this;
++        }
++
++        public Builder sessionTimeoutMs(long sessionTimeoutMs) {
++            config.setSessionTimeoutMs(sessionTimeoutMs);
++            return this;
++        }
++
++        public Builder maxSessionLifetimeMs(long maxSessionLifetimeMs) {
++            config.setMaxSessionLifetimeMs(maxSessionLifetimeMs);
++            return this;
++        }
++
++        public Builder maxSessionRequests(int maxSessionRequests) {
++            config.setMaxSessionRequests(maxSessionRequests);
++            return this;
++        }
++
++        public Builder maxSessions(int maxSessions) {
++            config.setMaxSessions(maxSessions);
++            return this;
++        }
++
++        public Builder sessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
++            config.setSessionCleanupIntervalMs(sessionCleanupIntervalMs);
++            return this;
++        }
++
++        public Builder peerConfigs(List<PeerConfig> peerConfigs) {
++            config.setPeerConfigs(peerConfigs);
++            return this;
++        }
++
++        public Builder addPeerConfig(PeerConfig peerConfig) {
++            config.peerConfigs.add(peerConfig);
++            return this;
++        }
++
++        public Builder clientAccessConfig(ClientAccessConfig clientAccessConfig) {
++            config.setClientAccessConfig(clientAccessConfig);
++            return this;
++        }
++
++        public Sm2SdkConfig build() {
++            return config;
++        }
++    }
++
++    // ========== Inner Classes ==========
++
++    /**
++     * Configuration for a single peer (server or client).
++     */
++    public static final class PeerConfig {
++
++        private String publicKey;
++        private String serverUrl;
++
++        public PeerConfig() {
++        }
++
++        public PeerConfig(String publicKey, String serverUrl) {
++            this.publicKey = publicKey;
++            this.serverUrl = serverUrl;
++        }
++
++        public String getPublicKey() {
++            return publicKey;
++        }
++
++        public void setPublicKey(String publicKey) {
++            this.publicKey = publicKey;
++        }
++
++        public String getServerUrl() {
++            return serverUrl;
++        }
++
++        public void setServerUrl(String serverUrl) {
++            this.serverUrl = serverUrl;
++        }
++
++        // Fluent setters
++
++        public PeerConfig withPublicKey(String publicKey) {
++            this.publicKey = publicKey;
++            return this;
++        }
++
++        public PeerConfig withServerUrl(String serverUrl) {
++            this.serverUrl = serverUrl;
++            return this;
++        }
++
++        @Override
++        public boolean equals(Object o) {
++            if (this == o) return true;
++            if (o == null || getClass() != o.getClass()) return false;
++            PeerConfig that = (PeerConfig) o;
++            return Objects.equals(publicKey, that.publicKey)
++                    && Objects.equals(serverUrl, that.serverUrl);
++        }
++
++        @Override
++        public int hashCode() {
++            return Objects.hash(publicKey, serverUrl);
++        }
++
++        @Override
++        public String toString() {
++            return "PeerConfig{" +
++                    "serverUrl='" + serverUrl + '\'' +
++                    '}';
++        }
++    }
++
++    /**
++     * Access-control configuration for the client SDK.
++     *
++     * <p>Defines which request paths the client is permitted to reach.
++     */
++    public static final class ClientAccessConfig {
++
++        private List<String> paths = new ArrayList<>();
++
++        public ClientAccessConfig() {
++        }
++
++        public ClientAccessConfig(List<String> paths) {
++            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
++        }
++
++        public List<String> getPaths() {
++            return paths;
++        }
++
++        public void setPaths(List<String> paths) {
++            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
++        }
++
++        // Fluent setters
++
++        public ClientAccessConfig withPaths(List<String> paths) {
++            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
++            return this;
++        }
++
++        public ClientAccessConfig addPath(String path) {
++            this.paths.add(path);
++            return this;
++        }
++
++        /**
++         * Returns an unmodifiable view of the permitted paths.
++         */
++        public List<String> getUnmodifiablePaths() {
++            return Collections.unmodifiableList(paths);
++        }
++
++        @Override
++        public boolean equals(Object o) {
++            if (this == o) return true;
++            if (o == null || getClass() != o.getClass()) return false;
++            ClientAccessConfig that = (ClientAccessConfig) o;
++            return Objects.equals(paths, that.paths);
++        }
++
++        @Override
++        public int hashCode() {
++            return Objects.hash(paths);
++        }
++
++        @Override
++        public String toString() {
++            return "ClientAccessConfig{paths=" + paths + '}';
++        }
++    }
++
++    @Override
++    public String toString() {
++        return "Sm2SdkConfig{" +
++                "handshakeTimeoutMs=" + handshakeTimeoutMs +
++                ", sessionTimeoutMs=" + sessionTimeoutMs +
++                ", maxSessionLifetimeMs=" + maxSessionLifetimeMs +
++                ", maxSessionRequests=" + maxSessionRequests +
++                ", maxSessions=" + maxSessions +
++                '}';
++    }
++}
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/session/Session.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/session/Session.java
+new file mode 100644
+index 0000000..ba6ee56
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/session/Session.java
+@@ -0,0 +1,286 @@
++package com.sm2sdk.core.session;
++
++import java.util.Arrays;
++import java.util.Objects;
++
++/**
++ * Represents an authenticated session between two peers using SM4 keys.
++ *
++ * <p>This class is <b>not</b> thread-safe for multi-writer scenarios without external
++ * synchronization. Key-access methods ({@link #getSm4KeyCopy()}, {@link #getSm4IvCopy()},
++ * {@link #rekey(byte[], byte[])}, {@link #touch()}, {@link #destroy()}) are
++ * <b>synchronized</b> on {@code this} to provide safe serial access within a single
++ * JVM. After {@link #destroy()} all key material is zeroed and every key-access method
++ * throws {@link IllegalStateException}.
++ *
++ * <p>Callers <b>must</b> invoke {@link #clearKeyCopy(byte[])} on any array returned
++ * by {@link #getSm4KeyCopy()} or {@link #getSm4IvCopy()} once they are done with it,
++ * to minimise the window during which key material exists outside the session.
++ */
++public class Session {
++
++    private final String sessionId;
++    private final String clientId;
++    private final String peerId;
++    private final byte[] sm4Key;
++    private final byte[] sm4Iv;
++    private final long createTime;
++    private volatile long lastAccessTime;
++    private final long maxLifetime;
++    private final int maxRequests;
++    private volatile int requestCount;
++    private volatile int rekeyVersion;
++    private volatile boolean destroyed;
++
++    /**
++     * Constructs a new Session with the given parameters.
++     *
++     * <p>Makes defensive copies of all key material arrays. The caller should
++     * {@link #clearKeyCopy(byte[])} the original arrays after construction.
++     *
++     * @param sessionId   unique session identifier (must not be null)
++     * @param clientId    client identity (must not be null)
++     * @param peerId      peer identity (must not be null)
++     * @param sm4Key      SM4 encryption key (16 bytes, must not be null)
++     * @param sm4Iv       SM4 initialisation vector (12 bytes, must not be null)
++     * @param createTime  epoch millis when the session was created
++     * @param maxLifetime maximum lifetime of the session in milliseconds
++     * @param maxRequests maximum number of requests allowed over the session lifetime
++     * @throws NullPointerException if any of sessionId, clientId, peerId, sm4Key, or sm4Iv is null
++     */
++    public Session(String sessionId, String clientId, String peerId,
++                   byte[] sm4Key, byte[] sm4Iv,
++                   long createTime, long maxLifetime, int maxRequests) {
++        this.sessionId = Objects.requireNonNull(sessionId, "sessionId must not be null");
++        this.clientId = Objects.requireNonNull(clientId, "clientId must not be null");
++        this.peerId = Objects.requireNonNull(peerId, "peerId must not be null");
++        Objects.requireNonNull(sm4Key, "sm4Key must not be null");
++        Objects.requireNonNull(sm4Iv, "sm4Iv must not be null");
++        // Defensive copies
++        this.sm4Key = Arrays.copyOf(sm4Key, sm4Key.length);
++        this.sm4Iv = Arrays.copyOf(sm4Iv, sm4Iv.length);
++        this.createTime = createTime;
++        this.lastAccessTime = createTime;
++        this.maxLifetime = maxLifetime;
++        this.maxRequests = maxRequests;
++        this.requestCount = 0;
++        this.rekeyVersion = 0;
++        this.destroyed = false;
++    }
++
++    // ========== Plain getters (non-key) ==========
++
++    public String getSessionId() {
++        return sessionId;
++    }
++
++    public String getClientId() {
++        return clientId;
++    }
++
++    public String getPeerId() {
++        return peerId;
++    }
++
++    public long getCreateTime() {
++        return createTime;
++    }
++
++    public long getLastAccessTime() {
++        return lastAccessTime;
++    }
++
++    public long getMaxLifetime() {
++        return maxLifetime;
++    }
++
++    public int getMaxRequests() {
++        return maxRequests;
++    }
++
++    public int getRequestCount() {
++        return requestCount;
++    }
++
++    public int getRekeyVersion() {
++        return rekeyVersion;
++    }
++
++    public boolean isDestroyed() {
++        return destroyed;
++    }
++
++    // ========== Key access — defensive copies ==========
++
++    /**
++     * Returns a <b>defensive copy</b> of the SM4 key.
++     *
++     * <p>The caller must invoke {@link #clearKeyCopy(byte[])} on the returned array
++     * when it is no longer needed.
++     *
++     * @return a copy of the internal SM4 key (never the internal reference)
++     * @throws IllegalStateException if the session has been destroyed
++     */
++    public synchronized byte[] getSm4KeyCopy() {
++        checkNotDestroyed();
++        return Arrays.copyOf(sm4Key, sm4Key.length);
++    }
++
++    /**
++     * Returns a <b>defensive copy</b> of the SM4 IV.
++     *
++     * <p>The caller must invoke {@link #clearKeyCopy(byte[])} on the returned array
++     * when it is no longer needed.
++     *
++     * @return a copy of the internal SM4 IV (never the internal reference)
++     * @throws IllegalStateException if the session has been destroyed
++     */
++    public synchronized byte[] getSm4IvCopy() {
++        checkNotDestroyed();
++        return Arrays.copyOf(sm4Iv, sm4Iv.length);
++    }
++
++    /**
++     * Securely zeroes a key-material array so it can be garbage-collected safely.
++     *
++     * <p>This is a static utility intended for arrays returned by
++     * {@link #getSm4KeyCopy()} and {@link #getSm4IvCopy()}.
++     *
++     * @param key the array to zero; if {@code null} the call is a no-op
++     */
++    public static void clearKeyCopy(byte[] key) {
++        if (key == null) {
++            return;
++        }
++        Arrays.fill(key, (byte) 0);
++    }
++
++    // ========== Lifecycle ==========
++
++    /**
++     * Records an access to this session.
++     *
++     * <p>Updates {@link #lastAccessTime} to the current time and increments
++     * {@link #requestCount}.
++     *
++     * @throws IllegalStateException if the session has been destroyed
++     */
++    public synchronized void touch() {
++        checkNotDestroyed();
++        this.lastAccessTime = System.currentTimeMillis();
++        this.requestCount++;
++    }
++
++    /**
++     * Replaces the session keys with new material.
++     *
++     * <p>The previous key and IV are zeroed before the new values are copied in
++     * (defensively). {@link #requestCount} is reset to zero and
++     * {@link #rekeyVersion} is incremented.
++     *
++     * @param newKey the new SM4 key (16 bytes, must not be null)
++     * @param newIv  the new SM4 IV (12 bytes, must not be null)
++     * @throws IllegalStateException if the session has been destroyed
++     * @throws NullPointerException  if newKey or newIv is null
++     */
++    public synchronized void rekey(byte[] newKey, byte[] newIv) {
++        checkNotDestroyed();
++        Objects.requireNonNull(newKey, "newKey must not be null");
++        Objects.requireNonNull(newIv, "newIv must not be null");
++
++        // Zero old keys
++        Arrays.fill(sm4Key, (byte) 0);
++        Arrays.fill(sm4Iv, (byte) 0);
++
++        // Copy new keys defensively
++        byte[] newKeyCopy = Arrays.copyOf(newKey, newKey.length);
++        byte[] newIvCopy = Arrays.copyOf(newIv, newIv.length);
++        System.arraycopy(newKeyCopy, 0, sm4Key, 0, Math.min(newKeyCopy.length, sm4Key.length));
++        System.arraycopy(newIvCopy, 0, sm4Iv, 0, Math.min(newIvCopy.length, sm4Iv.length));
++
++        // Clear the temporary copies
++        clearKeyCopy(newKeyCopy);
++        clearKeyCopy(newIvCopy);
++
++        this.requestCount = 0;
++        this.rekeyVersion++;
++    }
++
++    // ========== Expiry ==========
++
++    /**
++     * Checks whether this session has expired according to any of the three
++     * constraints: idle timeout, maximum lifetime, or maximum request count.
++     *
++     * @param timeoutMs        idle timeout in milliseconds (time since last access)
++     * @param maxLifetimeMs    maximum session lifetime in milliseconds (time since creation)
++     * @param maxRequestsLimit maximum number of requests permitted
++     * @return {@code true} if the session is destroyed or any constraint is exceeded
++     */
++    public boolean isExpired(long timeoutMs, long maxLifetimeMs, int maxRequestsLimit) {
++        if (destroyed) {
++            return true;
++        }
++        long now = System.currentTimeMillis();
++        if (now - lastAccessTime > timeoutMs) {
++            return true;
++        }
++        if (now - createTime > maxLifetimeMs) {
++            return true;
++        }
++        return requestCount >= maxRequestsLimit;
++    }
++
++    /**
++     * Returns the remaining lifetime in milliseconds before this session exceeds
++     * the given {@code maxLifetimeMs}.
++     *
++     * @param maxLifetimeMs the maximum lifetime to compare against
++     * @return remaining milliseconds (may be negative or zero if already expired)
++     */
++    public long remainingLifetimeMs(long maxLifetimeMs) {
++        return (createTime + maxLifetimeMs) - System.currentTimeMillis();
++    }
++
++    // ========== Destruction ==========
++
++    /**
++     * Destroys this session by zeroing all key material and setting the destroyed flag.
++     *
++     * <p>This method is <b>idempotent</b> — calling it multiple times has no
++     * additional effect and does not throw.
++     */
++    public synchronized void destroy() {
++        if (destroyed) {
++            return;
++        }
++        Arrays.fill(sm4Key, (byte) 0);
++        Arrays.fill(sm4Iv, (byte) 0);
++        this.destroyed = true;
++    }
++
++    // ========== Internal ==========
++
++    private void checkNotDestroyed() {
++        if (destroyed) {
++            throw new IllegalStateException(
++                    "Session [" + sessionId + "] has been destroyed");
++        }
++    }
++
++    @Override
++    public String toString() {
++        return "Session{" +
++                "sessionId='" + sessionId + '\'' +
++                ", clientId='" + clientId + '\'' +
++                ", peerId='" + peerId + '\'' +
++                ", createTime=" + createTime +
++                ", lastAccessTime=" + lastAccessTime +
++                ", maxLifetime=" + maxLifetime +
++                ", maxRequests=" + maxRequests +
++                ", requestCount=" + requestCount +
++                ", rekeyVersion=" + rekeyVersion +
++                ", destroyed=" + destroyed +
++                '}';
++    }
++}
+diff --git a/sm2-sdk/core/src/test/java/com/sm2sdk/core/session/SessionTest.java b/sm2-sdk/core/src/test/java/com/sm2sdk/core/session/SessionTest.java
+new file mode 100644
+index 0000000..68e586d
+--- /dev/null
++++ b/sm2-sdk/core/src/test/java/com/sm2sdk/core/session/SessionTest.java
+@@ -0,0 +1,484 @@
++package com.sm2sdk.core.session;
++
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++import java.util.Arrays;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++/**
++ * Comprehensive unit tests for {@link Session}.
++ *
++ * <p>Covers creation, defensive copying, key destruction, idempotent destroy,
++ * touch semantics, expiry detection (idle, max requests, max lifetime),
++ * rekey operations, and IllegalStateException guards.
++ */
++class SessionTest {
++
++    private static final String SESSION_ID = "sess-test-001";
++    private static final String CLIENT_ID = "client-01";
++    private static final String PEER_ID = "server-01";
++    private static final long CREATE_TIME = 1000L;
++    private static final long MAX_LIFETIME = 30000L;
++    private static final int MAX_REQUESTS = 100;
++
++    private byte[] sm4Key;
++    private byte[] sm4Iv;
++    private Session session;
++
++    @BeforeEach
++    void setUp() {
++        sm4Key = new byte[16];
++        sm4Iv = new byte[12];
++        for (int i = 0; i < 16; i++) {
++            sm4Key[i] = (byte) (i + 1);
++        }
++        for (int i = 0; i < 12; i++) {
++            sm4Iv[i] = (byte) (i + 10);
++        }
++        session = new Session(SESSION_ID, CLIENT_ID, PEER_ID, sm4Key, sm4Iv,
++                CREATE_TIME, MAX_LIFETIME, MAX_REQUESTS);
++    }
++
++    // ========== Creation ==========
++
++    @Test
++    void shouldCreateSessionWithGivenFields() {
++        assertEquals(SESSION_ID, session.getSessionId());
++        assertEquals(CLIENT_ID, session.getClientId());
++        assertEquals(PEER_ID, session.getPeerId());
++        assertEquals(CREATE_TIME, session.getCreateTime());
++        assertEquals(CREATE_TIME, session.getLastAccessTime());
++        assertEquals(MAX_LIFETIME, session.getMaxLifetime());
++        assertEquals(MAX_REQUESTS, session.getMaxRequests());
++        assertEquals(0, session.getRequestCount());
++        assertEquals(0, session.getRekeyVersion());
++        assertFalse(session.isDestroyed());
++    }
++
++    @Test
++    void shouldInitializeRequestCountToZero() {
++        assertEquals(0, session.getRequestCount());
++    }
++
++    @Test
++    void shouldInitializeRekeyVersionToZero() {
++        assertEquals(0, session.getRekeyVersion());
++    }
++
++    // ========== Defensive Copy ==========
++
++    @Test
++    void getSm4KeyCopyShouldReturnCopyNotReference() {
++        byte[] keyCopy = session.getSm4KeyCopy();
++        assertNotNull(keyCopy);
++        assertEquals(16, keyCopy.length);
++
++        // Modify the copy — original must not be affected
++        keyCopy[0] = (byte) 0xFF;
++        byte[] secondCopy = session.getSm4KeyCopy();
++        assertNotEquals(keyCopy[0], secondCopy[0],
++                "Modifying returned copy must not affect internal key");
++    }
++
++    @Test
++    void getSm4IvCopyShouldReturnCopyNotReference() {
++        byte[] ivCopy = session.getSm4IvCopy();
++        assertNotNull(ivCopy);
++        assertEquals(12, ivCopy.length);
++
++        ivCopy[0] = (byte) 0xFF;
++        byte[] secondCopy = session.getSm4IvCopy();
++        assertNotEquals(ivCopy[0], secondCopy[0],
++                "Modifying returned copy must not affect internal IV");
++    }
++
++    @Test
++    void getSm4KeyCopyShouldNotBeOriginalArray() {
++        byte[] keyCopy = session.getSm4KeyCopy();
++        assertNotSame(sm4Key, keyCopy,
++                "Returned array must be a different object from the constructor argument");
++    }
++
++    @Test
++    void getSm4IvCopyShouldNotBeOriginalArray() {
++        byte[] ivCopy = session.getSm4IvCopy();
++        assertNotSame(sm4Iv, ivCopy,
++                "Returned array must be a different object from the constructor argument");
++    }
++
++    @Test
++    void constructorShouldDefensivelyCopyKey() {
++        // Modify original array after construction — session must not be affected
++        sm4Key[0] = (byte) 0xAA;
++        byte[] sessionKey = session.getSm4KeyCopy();
++        assertNotEquals((byte) 0xAA, sessionKey[0],
++                "Constructor must defensively copy key material");
++    }
++
++    @Test
++    void constructorShouldDefensivelyCopyIv() {
++        sm4Iv[0] = (byte) 0xBB;
++        byte[] sessionIv = session.getSm4IvCopy();
++        assertNotEquals((byte) 0xBB, sessionIv[0],
++                "Constructor must defensively copy IV material");
++    }
++
++    // ========== clearKeyCopy ==========
++
++    @Test
++    void clearKeyCopyShouldZeroTheArray() {
++        byte[] key = new byte[]{1, 2, 3, 4, 5};
++        Session.clearKeyCopy(key);
++        for (byte b : key) {
++            assertEquals((byte) 0, b, "All bytes must be zero after clearKeyCopy");
++        }
++    }
++
++    @Test
++    void clearKeyCopyShouldHandleNullGracefully() {
++        // Should not throw NPE — gracefully handle null
++        assertDoesNotThrow(() -> Session.clearKeyCopy(null));
++    }
++
++    @Test
++    void clearKeyCopyShouldHandleEmptyArray() {
++        byte[] empty = new byte[0];
++        assertDoesNotThrow(() -> Session.clearKeyCopy(empty));
++        assertEquals(0, empty.length);
++    }
++
++    // ========== Destroy ==========
++
++    @Test
++    void destroyShouldBlockKeyAccess() {
++        // After destroy, all key-access methods must throw IllegalStateException
++        session.destroy();
++        assertThrows(IllegalStateException.class, () -> session.getSm4KeyCopy(),
++                "getSm4KeyCopy after destroy must throw IllegalStateException");
++        assertThrows(IllegalStateException.class, () -> session.getSm4IvCopy(),
++                "getSm4IvCopy after destroy must throw IllegalStateException");
++    }
++
++    @Test
++    void destroyShouldSetDestroyedFlag() {
++        assertFalse(session.isDestroyed());
++        session.destroy();
++        assertTrue(session.isDestroyed());
++    }
++
++    @Test
++    void doubleDestroyShouldBeIdempotent() {
++        session.destroy();
++        // Second destroy must not throw
++        assertDoesNotThrow(() -> session.destroy(),
++                "Double destroy must be idempotent and not throw");
++        assertTrue(session.isDestroyed());
++    }
++
++    @Test
++    void tripleDestroyShouldBeIdempotent() {
++        session.destroy();
++        session.destroy();
++        assertDoesNotThrow(() -> session.destroy(),
++                "Triple destroy must be idempotent and not throw");
++        assertTrue(session.isDestroyed());
++    }
++
++    // ========== Touch ==========
++
++    @Test
++    void touchShouldIncrementRequestCount() {
++        assertEquals(0, session.getRequestCount());
++        session.touch();
++        assertEquals(1, session.getRequestCount());
++    }
++
++    @Test
++    void touchShouldUpdateLastAccessTime() {
++        long originalAccess = session.getLastAccessTime();
++        // Simulate a small delay
++        sleepQuietly(5);
++        session.touch();
++        assertTrue(session.getLastAccessTime() > originalAccess,
++                "touch must update lastAccessTime");
++    }
++
++    @Test
++    void touchShouldIncrementCountSequentially() {
++        int increments = 5;
++        for (int i = 0; i < increments; i++) {
++            session.touch();
++        }
++        assertEquals(increments, session.getRequestCount());
++    }
++
++    // ========== Touch on Destroyed Session ==========
++
++    @Test
++    void touchOnDestroyedSessionShouldThrow() {
++        session.destroy();
++        assertThrows(IllegalStateException.class, () -> session.touch(),
++                "touch on destroyed session must throw IllegalStateException");
++    }
++
++    // ========== Expiry Detection ==========
++
++    @Test
++    void isExpiredShouldReturnFalseForActiveSession() {
++        long now = System.currentTimeMillis();
++        Session fresh = new Session("fresh", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now, 300_000L, MAX_REQUESTS);
++        assertFalse(fresh.isExpired(30_000L, 300_000L, MAX_REQUESTS),
++                "Fresh session should not be expired");
++    }
++
++    @Test
++    void isExpiredShouldDetectIdleTimeout() {
++        long now = System.currentTimeMillis();
++        // createTime=now, but lastAccessTime starts at createTime
++        Session idleSession = new Session("idle", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now - 100L, 300_000L, MAX_REQUESTS);
++        // idle timeout of 50ms — session was created 100ms ago, so idle
++        assertTrue(idleSession.isExpired(50L, 300_000L, MAX_REQUESTS),
++                "Session idle longer than timeoutMs should be expired");
++    }
++
++    @Test
++    void isExpiredShouldDetectMaxLifetimeExceeded() {
++        long now = System.currentTimeMillis();
++        // createTime is far in the past relative to maxLifetime
++        Session oldSession = new Session("old", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now - 5000L, 100L, MAX_REQUESTS);
++        assertTrue(oldSession.isExpired(30_000L, 100L, MAX_REQUESTS),
++                "Session past maxLifetime should be expired");
++    }
++
++    @Test
++    void isExpiredShouldDetectMaxRequestsExceeded() {
++        long now = System.currentTimeMillis();
++        Session busySession = new Session("busy", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now, 300_000L, 5);
++        for (int i = 0; i < 5; i++) {
++            busySession.touch();
++        }
++        assertTrue(busySession.isExpired(30_000L, 300_000L, 5),
++                "Session at max request limit should be expired");
++    }
++
++    @Test
++    void isExpiredShouldReturnFalseWhenWithinAllLimits() {
++        long now = System.currentTimeMillis();
++        Session freshSession = new Session("ok", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now, 300_000L, MAX_REQUESTS);
++        freshSession.touch();
++        assertFalse(freshSession.isExpired(30_000L, 300_000L, MAX_REQUESTS),
++                "Session within all limits should not be expired");
++    }
++
++    @Test
++    void isExpiredShouldCheckDestroyedSession() {
++        session.destroy();
++        assertTrue(session.isExpired(30_000L, MAX_LIFETIME, MAX_REQUESTS),
++                "Destroyed session should be considered expired");
++    }
++
++    // ========== remainingLifetimeMs ==========
++
++    @Test
++    void remainingLifetimeMsShouldReturnPositiveForFreshSession() {
++        long now = System.currentTimeMillis();
++        Session fresh = new Session("fresh", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now, 300_000L, MAX_REQUESTS);
++        long remaining = fresh.remainingLifetimeMs(300_000L);
++        assertTrue(remaining > 0,
++                "Remaining lifetime should be positive for fresh session");
++    }
++
++    @Test
++    void remainingLifetimeMsShouldReturnZeroForExpiredSession() {
++        long now = System.currentTimeMillis();
++        Session expired = new Session("expired", CLIENT_ID, PEER_ID,
++                sm4Key, sm4Iv, now - 5000L, 100L, MAX_REQUESTS);
++        long remaining = expired.remainingLifetimeMs(100L);
++        assertTrue(remaining <= 0,
++                "Remaining lifetime should be <= 0 for expired session");
++    }
++
++    // ========== Rekey ==========
++
++    @Test
++    void rekeyShouldReplaceKeys() {
++        byte[] oldKeyCopy = session.getSm4KeyCopy();
++        byte[] oldIvCopy = session.getSm4IvCopy();
++
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        Arrays.fill(newKey, (byte) 0x77);
++        Arrays.fill(newIv, (byte) 0x88);
++
++        session.rekey(newKey, newIv);
++
++        byte[] updatedKey = session.getSm4KeyCopy();
++        byte[] updatedIv = session.getSm4IvCopy();
++
++        // Verify new keys are set
++        for (byte b : updatedKey) {
++            assertEquals((byte) 0x77, b, "Key should be updated to new value");
++        }
++        for (byte b : updatedIv) {
++            assertEquals((byte) 0x88, b, "IV should be updated to new value");
++        }
++
++        // Verify old keys are NOT the same as current
++        assertFalse(Arrays.equals(oldKeyCopy, updatedKey),
++                "Key should differ from original after rekey");
++        assertFalse(Arrays.equals(oldIvCopy, updatedIv),
++                "IV should differ from original after rekey");
++    }
++
++    @Test
++    void rekeyShouldZeroOldKeys() {
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        Arrays.fill(newKey, (byte) 0x55);
++        Arrays.fill(newIv, (byte) 0x66);
++
++        session.rekey(newKey, newIv);
++
++        // The old key bytes (1..16, 10..21) should no longer be in the internal arrays
++        byte[] currentKey = session.getSm4KeyCopy();
++        byte[] currentIv = session.getSm4IvCopy();
++
++        boolean foundOldKeyByte = false;
++        for (int i = 0; i < currentKey.length && i < 16; i++) {
++            if (currentKey[i] == (byte) (i + 1)) {
++                foundOldKeyByte = true;
++                break;
++            }
++        }
++        assertFalse(foundOldKeyByte, "Old key bytes should be zeroed after rekey");
++
++        boolean foundOldIvByte = false;
++        for (int i = 0; i < currentIv.length && i < 12; i++) {
++            if (currentIv[i] == (byte) (i + 10)) {
++                foundOldIvByte = true;
++                break;
++            }
++        }
++        assertFalse(foundOldIvByte, "Old IV bytes should be zeroed after rekey");
++    }
++
++    @Test
++    void rekeyShouldResetRequestCount() {
++        session.touch();
++        session.touch();
++        assertEquals(2, session.getRequestCount());
++
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        session.rekey(newKey, newIv);
++
++        assertEquals(0, session.getRequestCount(),
++                "Request count should be reset after rekey");
++    }
++
++    @Test
++    void rekeyShouldIncrementRekeyVersion() {
++        assertEquals(0, session.getRekeyVersion());
++
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        session.rekey(newKey, newIv);
++
++        assertEquals(1, session.getRekeyVersion(),
++                "Rekey version should increment after rekey");
++    }
++
++    @Test
++    void rekeyShouldDefensivelyCopyNewKeys() {
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        Arrays.fill(newKey, (byte) 0xAA);
++        Arrays.fill(newIv, (byte) 0xBB);
++
++        session.rekey(newKey, newIv);
++
++        // Modify the original arrays — session must not be affected
++        newKey[0] = (byte) 0xCC;
++        newIv[0] = (byte) 0xDD;
++
++        byte[] sessionKey = session.getSm4KeyCopy();
++        byte[] sessionIv = session.getSm4IvCopy();
++        assertEquals((byte) 0xAA, sessionKey[0],
++                "rekey must defensively copy key material");
++        assertEquals((byte) 0xBB, sessionIv[0],
++                "rekey must defensively copy IV material");
++    }
++
++    // ========== Destroyed Guard ==========
++
++    @Test
++    void getSm4KeyCopyOnDestroyedSessionShouldThrow() {
++        session.destroy();
++        assertThrows(IllegalStateException.class, () -> session.getSm4KeyCopy(),
++                "getSm4KeyCopy on destroyed session must throw IllegalStateException");
++    }
++
++    @Test
++    void getSm4IvCopyOnDestroyedSessionShouldThrow() {
++        session.destroy();
++        assertThrows(IllegalStateException.class, () -> session.getSm4IvCopy(),
++                "getSm4IvCopy on destroyed session must throw IllegalStateException");
++    }
++
++    @Test
++    void rekeyOnDestroyedSessionShouldThrow() {
++        session.destroy();
++        byte[] newKey = new byte[16];
++        byte[] newIv = new byte[12];
++        assertThrows(IllegalStateException.class, () -> session.rekey(newKey, newIv),
++                "rekey on destroyed session must throw IllegalStateException");
++    }
++
++    @Test
++    void touchOnDestroyedSessionShouldThrow2() {
++        session.destroy();
++        assertThrows(IllegalStateException.class, () -> session.touch(),
++                "touch on destroyed session must throw IllegalStateException");
++    }
++
++    // ========== Null/Edge Case Constructor ==========
++
++    @Test
++    void constructorShouldThrowOnNullSessionId() {
++        assertThrows(NullPointerException.class,
++                () -> new Session(null, CLIENT_ID, PEER_ID, sm4Key, sm4Iv,
++                        CREATE_TIME, MAX_LIFETIME, MAX_REQUESTS));
++    }
++
++    @Test
++    void constructorShouldThrowOnNullKey() {
++        assertThrows(NullPointerException.class,
++                () -> new Session(SESSION_ID, CLIENT_ID, PEER_ID, null, sm4Iv,
++                        CREATE_TIME, MAX_LIFETIME, MAX_REQUESTS));
++    }
++
++    @Test
++    void constructorShouldThrowOnNullIv() {
++        assertThrows(NullPointerException.class,
++                () -> new Session(SESSION_ID, CLIENT_ID, PEER_ID, sm4Key, null,
++                        CREATE_TIME, MAX_LIFETIME, MAX_REQUESTS));
++    }
++
++    // ========== Helpers ==========
++
++    private void sleepQuietly(long millis) {
++        try {
++            Thread.sleep(millis);
++        } catch (InterruptedException e) {
++            Thread.currentThread().interrupt();
++        }
++    }
++}

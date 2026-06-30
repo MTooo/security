@@ -1,0 +1,100 @@
+# Review package: 941c96aea75570f04ac62fe27947bc625c5bf397..HEAD
+
+## Commits
+10b7bcf feat: create sm2-sdk-core module POM
+
+## Files changed
+ sm2-sdk/core/pom.xml                               | 63 ++++++++++++++++++++++
+ .../test/java/com/sm2sdk/core/package-info.java    |  4 ++
+ 2 files changed, 67 insertions(+)
+
+## Diff
+diff --git a/sm2-sdk/core/pom.xml b/sm2-sdk/core/pom.xml
+index a48498a..dc6e9d5 100644
+--- a/sm2-sdk/core/pom.xml
++++ b/sm2-sdk/core/pom.xml
+@@ -9,11 +9,74 @@
+         <artifactId>sm2-sdk-parent</artifactId>
+         <version>1.0.0-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+     <artifactId>sm2-sdk-core</artifactId>
+     <packaging>jar</packaging>
+ 
+     <name>SM2 SDK - Core</name>
+     <description>SM2 Security Data Exchange SDK - Core Module</description>
++
++    <dependencies>
++        <!-- Hutool - utility toolkit -->
++        <dependency>
++            <groupId>cn.hutool</groupId>
++            <artifactId>hutool-all</artifactId>
++        </dependency>
++
++        <!-- Jackson - JSON processing (to be shaded) -->
++        <dependency>
++            <groupId>com.fasterxml.jackson.core</groupId>
++            <artifactId>jackson-databind</artifactId>
++        </dependency>
++
++        <!-- Caffeine - caching -->
++        <dependency>
++            <groupId>com.github.ben-manes.caffeine</groupId>
++            <artifactId>caffeine</artifactId>
++        </dependency>
++
++        <!-- SLF4J - logging facade -->
++        <dependency>
++            <groupId>org.slf4j</groupId>
++            <artifactId>slf4j-api</artifactId>
++            <scope>provided</scope>
++        </dependency>
++
++        <!-- JUnit 5 - testing -->
++        <dependency>
++            <groupId>org.junit.jupiter</groupId>
++            <artifactId>junit-jupiter</artifactId>
++            <scope>test</scope>
++        </dependency>
++
++        <!-- Mockito - mocking -->
++        <dependency>
++            <groupId>org.mockito</groupId>
++            <artifactId>mockito-core</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <!-- Compiler plugin -->
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-compiler-plugin</artifactId>
++            </plugin>
++
++            <!-- Surefire plugin -->
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-surefire-plugin</artifactId>
++            </plugin>
++
++            <!-- Source plugin -->
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-source-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
+ </project>
+diff --git a/sm2-sdk/core/src/test/java/com/sm2sdk/core/package-info.java b/sm2-sdk/core/src/test/java/com/sm2sdk/core/package-info.java
+new file mode 100644
+index 0000000..125596d
+--- /dev/null
++++ b/sm2-sdk/core/src/test/java/com/sm2sdk/core/package-info.java
+@@ -0,0 +1,4 @@
++/**
++ * Core module test package.
++ */
++package com.sm2sdk.core;

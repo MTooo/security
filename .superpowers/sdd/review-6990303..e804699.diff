@@ -1,0 +1,329 @@
+# Review package: 69903035e60bcc29971ed0a2bf3dbdfefcfec1e1..HEAD
+
+## Commits
+e804699 feat: create parent POM with dependency management
+
+## Files changed
+ sm2-sdk/client/pom.xml  |  19 +++++
+ sm2-sdk/core/pom.xml    |  19 +++++
+ sm2-sdk/pom.xml         | 209 ++++++++++++++++++++++++++++++++++++++++++++++++
+ sm2-sdk/server/pom.xml  |  19 +++++
+ sm2-sdk/starter/pom.xml |  19 +++++
+ 5 files changed, 285 insertions(+)
+
+## Diff
+diff --git a/sm2-sdk/client/pom.xml b/sm2-sdk/client/pom.xml
+new file mode 100644
+index 0000000..fb23a88
+--- /dev/null
++++ b/sm2-sdk/client/pom.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <parent>
++        <groupId>com.sm2sdk</groupId>
++        <artifactId>sm2-sdk-parent</artifactId>
++        <version>1.0.0</version>
++        <relativePath>../pom.xml</relativePath>
++    </parent>
++
++    <artifactId>sm2-sdk-client</artifactId>
++    <packaging>jar</packaging>
++
++    <name>SM2 SDK - Client</name>
++    <description>SM2 Security Data Exchange SDK - Client Module</description>
++</project>
+diff --git a/sm2-sdk/core/pom.xml b/sm2-sdk/core/pom.xml
+new file mode 100644
+index 0000000..bd66148
+--- /dev/null
++++ b/sm2-sdk/core/pom.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <parent>
++        <groupId>com.sm2sdk</groupId>
++        <artifactId>sm2-sdk-parent</artifactId>
++        <version>1.0.0</version>
++        <relativePath>../pom.xml</relativePath>
++    </parent>
++
++    <artifactId>sm2-sdk-core</artifactId>
++    <packaging>jar</packaging>
++
++    <name>SM2 SDK - Core</name>
++    <description>SM2 Security Data Exchange SDK - Core Module</description>
++</project>
+diff --git a/sm2-sdk/pom.xml b/sm2-sdk/pom.xml
+new file mode 100644
+index 0000000..ddf96de
+--- /dev/null
++++ b/sm2-sdk/pom.xml
+@@ -0,0 +1,209 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <groupId>com.sm2sdk</groupId>
++    <artifactId>sm2-sdk-parent</artifactId>
++    <version>1.0.0</version>
++    <packaging>pom</packaging>
++
++    <name>SM2 Security Data Exchange SDK</name>
++    <description>SM2 Security Data Exchange SDK - Parent POM</description>
++    <url>https://github.com/sm2sdk/sm2-sdk</url>
++
++    <modules>
++        <module>core</module>
++        <module>client</module>
++        <module>server</module>
++        <module>starter</module>
++    </modules>
++
++    <properties>
++        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
++
++        <!-- Java version -->
++        <maven.compiler.source>1.8</maven.compiler.source>
++        <maven.compiler.target>1.8</maven.compiler.target>
++
++        <!-- Core dependencies -->
++        <hutool.version>5.8.32</hutool.version>
++        <jackson.version>2.15.4</jackson.version>
++        <caffeine.version>2.9.3</caffeine.version>
++        <slf4j.version>2.0.9</slf4j.version>
++
++        <!-- Servlet API -->
++        <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
++        <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
++
++        <!-- Spring -->
++        <spring-boot.version>3.2.0</spring-boot.version>
++        <spring.version>6.1.1</spring.version>
++
++        <!-- Lettuce -->
++        <lettuce.version>6.3.2.RELEASE</lettuce.version>
++
++        <!-- Testing -->
++        <junit.version>5.10.1</junit.version>
++        <mockito.version>5.8.0</mockito.version>
++
++        <!-- Plugins -->
++        <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
++        <maven-shade-plugin.version>3.5.3</maven-shade-plugin.version>
++        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
++        <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
++        <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
++    </properties>
++
++    <dependencyManagement>
++        <dependencies>
++            <!-- Hutool -->
++            <dependency>
++                <groupId>cn.hutool</groupId>
++                <artifactId>hutool-all</artifactId>
++                <version>${hutool.version}</version>
++            </dependency>
++
++            <!-- Jackson BOM -->
++            <dependency>
++                <groupId>com.fasterxml.jackson</groupId>
++                <artifactId>jackson-bom</artifactId>
++                <version>${jackson.version}</version>
++                <type>pom</type>
++                <scope>import</scope>
++            </dependency>
++
++            <!-- Caffeine -->
++            <dependency>
++                <groupId>com.github.ben-manes.caffeine</groupId>
++                <artifactId>caffeine</artifactId>
++                <version>${caffeine.version}</version>
++            </dependency>
++
++            <!-- SLF4J -->
++            <dependency>
++                <groupId>org.slf4j</groupId>
++                <artifactId>slf4j-api</artifactId>
++                <version>${slf4j.version}</version>
++            </dependency>
++
++            <!-- javax.servlet-api -->
++            <dependency>
++                <groupId>javax.servlet</groupId>
++                <artifactId>javax.servlet-api</artifactId>
++                <version>${javax.servlet-api.version}</version>
++                <scope>provided</scope>
++            </dependency>
++
++            <!-- jakarta.servlet-api -->
++            <dependency>
++                <groupId>jakarta.servlet</groupId>
++                <artifactId>jakarta.servlet-api</artifactId>
++                <version>${jakarta.servlet-api.version}</version>
++                <scope>provided</scope>
++            </dependency>
++
++            <!-- Spring Boot BOM -->
++            <dependency>
++                <groupId>org.springframework.boot</groupId>
++                <artifactId>spring-boot-dependencies</artifactId>
++                <version>${spring-boot.version}</version>
++                <type>pom</type>
++                <scope>import</scope>
++            </dependency>
++
++            <!-- Spring Framework BOM -->
++            <dependency>
++                <groupId>org.springframework</groupId>
++                <artifactId>spring-framework-bom</artifactId>
++                <version>${spring.version}</version>
++                <type>pom</type>
++                <scope>import</scope>
++            </dependency>
++
++            <!-- Lettuce -->
++            <dependency>
++                <groupId>io.lettuce</groupId>
++                <artifactId>lettuce-core</artifactId>
++                <version>${lettuce.version}</version>
++            </dependency>
++
++            <!-- JUnit 5 BOM -->
++            <dependency>
++                <groupId>org.junit</groupId>
++                <artifactId>junit-bom</artifactId>
++                <version>${junit.version}</version>
++                <type>pom</type>
++                <scope>import</scope>
++            </dependency>
++
++            <!-- Mockito -->
++            <dependency>
++                <groupId>org.mockito</groupId>
++                <artifactId>mockito-core</artifactId>
++                <version>${mockito.version}</version>
++                <scope>test</scope>
++            </dependency>
++        </dependencies>
++    </dependencyManagement>
++
++    <build>
++        <pluginManagement>
++            <plugins>
++                <!-- Compiler plugin -->
++                <plugin>
++                    <groupId>org.apache.maven.plugins</groupId>
++                    <artifactId>maven-compiler-plugin</artifactId>
++                    <version>${maven-compiler-plugin.version}</version>
++                    <configuration>
++                        <source>${maven.compiler.source}</source>
++                        <target>${maven.compiler.target}</target>
++                        <encoding>${project.build.sourceEncoding}</encoding>
++                    </configuration>
++                </plugin>
++
++                <!-- Shade plugin -->
++                <plugin>
++                    <groupId>org.apache.maven.plugins</groupId>
++                    <artifactId>maven-shade-plugin</artifactId>
++                    <version>${maven-shade-plugin.version}</version>
++                </plugin>
++
++                <!-- Surefire plugin -->
++                <plugin>
++                    <groupId>org.apache.maven.plugins</groupId>
++                    <artifactId>maven-surefire-plugin</artifactId>
++                    <version>${maven-surefire-plugin.version}</version>
++                </plugin>
++
++                <!-- Source plugin -->
++                <plugin>
++                    <groupId>org.apache.maven.plugins</groupId>
++                    <artifactId>maven-source-plugin</artifactId>
++                    <version>${maven-source-plugin.version}</version>
++                    <executions>
++                        <execution>
++                            <id>attach-sources</id>
++                            <goals>
++                                <goal>jar-no-fork</goal>
++                            </goals>
++                        </execution>
++                    </executions>
++                </plugin>
++
++                <!-- Javadoc plugin -->
++                <plugin>
++                    <groupId>org.apache.maven.plugins</groupId>
++                    <artifactId>maven-javadoc-plugin</artifactId>
++                    <version>${maven-javadoc-plugin.version}</version>
++                    <configuration>
++                        <source>${maven.compiler.source}</source>
++                        <encoding>${project.build.sourceEncoding}</encoding>
++                    </configuration>
++                </plugin>
++            </plugins>
++        </pluginManagement>
++    </build>
++</project>
+diff --git a/sm2-sdk/server/pom.xml b/sm2-sdk/server/pom.xml
+new file mode 100644
+index 0000000..55a8489
+--- /dev/null
++++ b/sm2-sdk/server/pom.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <parent>
++        <groupId>com.sm2sdk</groupId>
++        <artifactId>sm2-sdk-parent</artifactId>
++        <version>1.0.0</version>
++        <relativePath>../pom.xml</relativePath>
++    </parent>
++
++    <artifactId>sm2-sdk-server</artifactId>
++    <packaging>jar</packaging>
++
++    <name>SM2 SDK - Server</name>
++    <description>SM2 Security Data Exchange SDK - Server Module</description>
++</project>
+diff --git a/sm2-sdk/starter/pom.xml b/sm2-sdk/starter/pom.xml
+new file mode 100644
+index 0000000..6be36f0
+--- /dev/null
++++ b/sm2-sdk/starter/pom.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <parent>
++        <groupId>com.sm2sdk</groupId>
++        <artifactId>sm2-sdk-parent</artifactId>
++        <version>1.0.0</version>
++        <relativePath>../pom.xml</relativePath>
++    </parent>
++
++    <artifactId>sm2-sdk-starter</artifactId>
++    <packaging>jar</packaging>
++
++    <name>SM2 SDK - Starter</name>
++    <description>SM2 Security Data Exchange SDK - Spring Boot Starter Module</description>
++</project>

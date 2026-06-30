@@ -1,0 +1,318 @@
+# Review package: f3cdac4ba87e03479726e9db72dc36124d1e50c3..HEAD
+
+## Commits
+79d4e4b feat: add ErrorCode enum and Sm2SdkException
+
+## Files changed
+ .../java/com/sm2sdk/core/exception/ErrorCode.java  |  97 ++++++++++++++++++
+ .../com/sm2sdk/core/exception/Sm2SdkException.java |  81 +++++++++++++++
+ .../com/sm2sdk/core/exception/ErrorCodeTest.java   | 110 +++++++++++++++++++++
+ 3 files changed, 288 insertions(+)
+
+## Diff
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/ErrorCode.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/ErrorCode.java
+new file mode 100644
+index 0000000..45e8e9a
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/ErrorCode.java
+@@ -0,0 +1,97 @@
++package com.sm2sdk.core.exception;
++
++/**
++ * Standardized error codes for the SM2 SDK.
++ *
++ * <p>Each error code is a 5-digit number where:
++ * <ul>
++ *   <li>The first digit indicates severity (1=minor, 2=warning, 3=critical)</li>
++ *   <li>The second digit indicates category (1=client, 2=server, 9=general)</li>
++ *   <li>The remaining three digits are the specific error number</li>
++ * </ul>
++ */
++public enum ErrorCode {
++
++    // ========== Client Errors (11xxx) ==========
++    CLIENT_INIT_FAILED("11000", 500, "Client initialization failed"),
++    CLIENT_HANDSHAKE_FAILED("11100", 500, "Client handshake failed"),
++    HANDSHAKE_TIMEOUT("11101", 408, "Handshake timed out"),
++    CLIENT_SESSION_INVALID("11200", 401, "Client session invalid"),
++    SESSION_EXPIRED("11301", 401, "Session has expired"),
++    CLIENT_SESSION_MISMATCH("11302", 401, "Client session mismatch"),
++    CLIENT_CONFIG_INVALID("11400", 500, "Client configuration is invalid"),
++    CLIENT_ENCRYPT_FAILED("11500", 500, "Client encryption failed"),
++    CLIENT_DECRYPT_FAILED("11501", 500, "Client decryption failed"),
++    CLIENT_SIGN_FAILED("11502", 500, "Client signing failed"),
++    SESSION_LIMIT_EXCEEDED("11503", 429, "Session limit exceeded"),
++
++    // ========== Crypto Errors (21xxx) ==========
++    SM4_ENCRYPT_FAILED("21201", 500, "SM4 encryption failed"),
++    SM4_DECRYPT_TAG_FAILED("21202", 400, "SM4 decryption tag verification failed"),
++    SM2_SIGN_FAILED("21203", 500, "SM2 signing failed"),
++    SM2_VERIFY_FAILED("21204", 400, "SM2 signature verification failed"),
++    KEY_EXCHANGE_FAILED("21205", 500, "Key exchange failed"),
++
++    // ========== Server Errors (22xxx) ==========
++    CLIENT_CERT_VERIFY_FAILED("22101", 401, "Client certificate verification failed"),
++    SERVER_HANDSHAKE_ERROR("22200", 500, "Server handshake error"),
++    SESSION_NOT_FOUND("22301", 404, "Session not found"),
++    SERVER_CONFIG_ERROR("22400", 500, "Server configuration error"),
++    SERVER_INTERNAL_ERROR("22501", 500, "Server internal error"),
++
++    // ========== Security / Credential Errors (3xxxx) ==========
++    CLIENT_PRIVATE_KEY_MISSING("31401", 500, "Client private key is missing"),
++    CLIENT_CERT_MISSING("31402", 500, "Client certificate is missing"),
++    SERVER_CERT_MISSING("32401", 500, "Server certificate is missing"),
++
++    // ========== General Errors (19xxx, 29xxx, 39xxx) ==========
++    TIMESTAMP_INVALID("19001", 400, "Timestamp is invalid"),
++    NONCE_INVALID("19002", 400, "Nonce is invalid"),
++    CIRCUIT_BREAKER_OPEN("19003", 503, "Circuit breaker is open"),
++    NONCE_REPLAY("29001", 403, "Nonce replay detected"),
++    INTEGRITY_CHECK_FAILED("29002", 400, "Integrity check failed"),
++    DECRYPT_FAILED("29003", 500, "Decryption failed"),
++    ENCRYPT_FAILED("29004", 500, "Encryption failed"),
++    SIGNATURE_INVALID("29005", 400, "Signature is invalid"),
++    UNKNOWN_ERROR("39000", 500, "Unknown error");
++
++    private final String code;
++    private final int httpStatus;
++    private final String message;
++
++    ErrorCode(String code, int httpStatus, String message) {
++        this.code = code;
++        this.httpStatus = httpStatus;
++        this.message = message;
++    }
++
++    /**
++     * Returns the 5-digit error code string.
++     */
++    public String getCode() {
++        return code;
++    }
++
++    /**
++     * Returns the recommended HTTP status code for this error.
++     */
++    public int getHttpStatus() {
++        return httpStatus;
++    }
++
++    /**
++     * Returns a human-readable description of this error.
++     */
++    public String getMessage() {
++        return message;
++    }
++
++    /**
++     * Returns the severity level extracted from the first digit of the error code.
++     *
++     * @return 1 (minor), 2 (warning), or 3 (critical)
++     */
++    public int getSeverity() {
++        return code.charAt(0) - '0';
++    }
++}
+diff --git a/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/Sm2SdkException.java b/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/Sm2SdkException.java
+new file mode 100644
+index 0000000..915d691
+--- /dev/null
++++ b/sm2-sdk/core/src/main/java/com/sm2sdk/core/exception/Sm2SdkException.java
+@@ -0,0 +1,81 @@
++package com.sm2sdk.core.exception;
++
++/**
++ * Base exception for all SM2 SDK errors.
++ *
++ * <p>Carries an {@link ErrorCode} with its associated HTTP status,
++ * an optional detail message, and an optional session identifier
++ * for correlating failures in a multi-party exchange.
++ */
++public class Sm2SdkException extends RuntimeException {
++
++    private final ErrorCode errorCode;
++    private final int httpStatus;
++    private final String sessionId;
++
++    private static final long serialVersionUID = 1L;
++
++    /**
++     * Creates an exception from an {@link ErrorCode} alone.
++     * The exception message is set to the enum's default message.
++     */
++    public Sm2SdkException(ErrorCode errorCode) {
++        super(errorCode.getMessage());
++        this.errorCode = errorCode;
++        this.httpStatus = errorCode.getHttpStatus();
++        this.sessionId = null;
++    }
++
++    /**
++     * Creates an exception from an {@link ErrorCode} with a custom detail message.
++     */
++    public Sm2SdkException(ErrorCode errorCode, String detail) {
++        super(detail);
++        this.errorCode = errorCode;
++        this.httpStatus = errorCode.getHttpStatus();
++        this.sessionId = null;
++    }
++
++    /**
++     * Creates an exception from an {@link ErrorCode} with a detail message
++     * and a root cause.
++     */
++    public Sm2SdkException(ErrorCode errorCode, String detail, Throwable cause) {
++        super(detail, cause);
++        this.errorCode = errorCode;
++        this.httpStatus = errorCode.getHttpStatus();
++        this.sessionId = null;
++    }
++
++    /**
++     * Creates an exception from an {@link ErrorCode} with a detail message
++     * and a session identifier for correlation.
++     */
++    public Sm2SdkException(ErrorCode errorCode, String detail, String sessionId) {
++        super(detail);
++        this.errorCode = errorCode;
++        this.httpStatus = errorCode.getHttpStatus();
++        this.sessionId = sessionId;
++    }
++
++    /**
++     * Returns the {@link ErrorCode} associated with this exception.
++     */
++    public ErrorCode getErrorCode() {
++        return errorCode;
++    }
++
++    /**
++     * Returns the HTTP status code associated with this exception.
++     */
++    public int getHttpStatus() {
++        return httpStatus;
++    }
++
++    /**
++     * Returns the session identifier, or {@code null} if none was set.
++     */
++    public String getSessionId() {
++        return sessionId;
++    }
++}
+diff --git a/sm2-sdk/core/src/test/java/com/sm2sdk/core/exception/ErrorCodeTest.java b/sm2-sdk/core/src/test/java/com/sm2sdk/core/exception/ErrorCodeTest.java
+new file mode 100644
+index 0000000..284c5b5
+--- /dev/null
++++ b/sm2-sdk/core/src/test/java/com/sm2sdk/core/exception/ErrorCodeTest.java
+@@ -0,0 +1,110 @@
++package com.sm2sdk.core.exception;
++
++import org.junit.jupiter.api.Test;
++import static org.junit.jupiter.api.Assertions.*;
++
++class ErrorCodeTest {
++
++    @Test
++    void shouldHaveAll33ErrorCodes() {
++        assertEquals(33, ErrorCode.values().length);
++    }
++
++    @Test
++    void shouldHaveClientCodes() {
++        assertEquals("11000", ErrorCode.CLIENT_INIT_FAILED.getCode());
++        assertEquals("21202", ErrorCode.SM4_DECRYPT_TAG_FAILED.getCode());
++        assertEquals("11301", ErrorCode.SESSION_EXPIRED.getCode());
++        assertEquals("31401", ErrorCode.CLIENT_PRIVATE_KEY_MISSING.getCode());
++    }
++
++    @Test
++    void shouldHaveServerCodes() {
++        assertEquals("22301", ErrorCode.SESSION_NOT_FOUND.getCode());
++        assertEquals("22101", ErrorCode.CLIENT_CERT_VERIFY_FAILED.getCode());
++    }
++
++    @Test
++    void shouldHaveGeneralCodes() {
++        assertEquals("39000", ErrorCode.UNKNOWN_ERROR.getCode());
++        assertEquals("29001", ErrorCode.NONCE_REPLAY.getCode());
++        assertEquals("19003", ErrorCode.CIRCUIT_BREAKER_OPEN.getCode());
++    }
++
++    @Test
++    void shouldMapHttpStatus() {
++        assertEquals(400, ErrorCode.SM4_DECRYPT_TAG_FAILED.getHttpStatus());
++        assertEquals(401, ErrorCode.SESSION_EXPIRED.getHttpStatus());
++        assertEquals(403, ErrorCode.NONCE_REPLAY.getHttpStatus());
++        assertEquals(408, ErrorCode.HANDSHAKE_TIMEOUT.getHttpStatus());
++        assertEquals(429, ErrorCode.SESSION_LIMIT_EXCEEDED.getHttpStatus());
++        assertEquals(500, ErrorCode.UNKNOWN_ERROR.getHttpStatus());
++    }
++
++    @Test
++    void shouldExtractSeverity() {
++        assertEquals(1, ErrorCode.CLIENT_INIT_FAILED.getSeverity());
++        assertEquals(2, ErrorCode.SM4_DECRYPT_TAG_FAILED.getSeverity());
++        assertEquals(3, ErrorCode.CLIENT_PRIVATE_KEY_MISSING.getSeverity());
++    }
++
++    @Test
++    void shouldHaveUniqueCodes() {
++        ErrorCode[] values = ErrorCode.values();
++        for (int i = 0; i < values.length; i++) {
++            for (int j = i + 1; j < values.length; j++) {
++                assertNotEquals(values[i].getCode(), values[j].getCode(),
++                        "Duplicate code between " + values[i] + " and " + values[j]);
++            }
++        }
++    }
++
++    @Test
++    void shouldProduceReadableMessage() {
++        assertNotNull(ErrorCode.UNKNOWN_ERROR.getMessage());
++        assertFalse(ErrorCode.UNKNOWN_ERROR.getMessage().isEmpty());
++        assertTrue(ErrorCode.UNKNOWN_ERROR.getMessage().contains("Unknown"));
++    }
++
++    @Test
++    void sm2SdkExceptionShouldCarryErrorCode() {
++        Sm2SdkException ex = new Sm2SdkException(ErrorCode.UNKNOWN_ERROR);
++        assertEquals(ErrorCode.UNKNOWN_ERROR, ex.getErrorCode());
++        assertEquals(500, ex.getHttpStatus());
++    }
++
++    @Test
++    void sm2SdkExceptionShouldCarryDetail() {
++        Sm2SdkException ex = new Sm2SdkException(ErrorCode.UNKNOWN_ERROR, "Something went wrong");
++        assertEquals("Something went wrong", ex.getMessage());
++        assertEquals(ErrorCode.UNKNOWN_ERROR, ex.getErrorCode());
++    }
++
++    @Test
++    void sm2SdkExceptionShouldCarryCause() {
++        Throwable cause = new RuntimeException("root cause");
++        Sm2SdkException ex = new Sm2SdkException(ErrorCode.UNKNOWN_ERROR, "detail", cause);
++        assertSame(cause, ex.getCause());
++        assertEquals("detail", ex.getMessage());
++    }
++
++    @Test
++    void sm2SdkExceptionShouldCarrySessionId() {
++        Sm2SdkException ex = new Sm2SdkException(ErrorCode.UNKNOWN_ERROR, "detail", "session-123");
++        assertEquals("session-123", ex.getSessionId());
++        assertEquals("detail", ex.getMessage());
++    }
++
++    @Test
++    void sm2SdkExceptionShouldBeRuntimeException() {
++        assertInstanceOf(RuntimeException.class, new Sm2SdkException(ErrorCode.UNKNOWN_ERROR));
++    }
++
++    @Test
++    void allCodesShouldBeExactlyFiveDigits() {
++        for (ErrorCode ec : ErrorCode.values()) {
++            assertEquals(5, ec.getCode().length(),
++                    "Code " + ec.getCode() + " must be exactly 5 digits");
++        }
++    }
++}
