@@ -172,6 +172,21 @@ public class Session {
     }
 
     /**
+     * 续期此会话，将 {@link #lastAccessTime} 更新为当前时间，并将
+     * {@link #requestCount} 重置为零。
+     *
+     * <p>与 {@link #touch()} 不同，{@code renew()} 会将请求计数归零，
+     * 适用于需要完全刷新会话状态的场景（如显式续期操作）。
+     *
+     * @throws IllegalStateException 如果会话已被销毁
+     */
+    public synchronized void renew() {
+        checkNotDestroyed();
+        this.lastAccessTime = System.currentTimeMillis();
+        this.requestCount = 0;
+    }
+
+    /**
      * Replaces the session keys with new material.
      *
      * <p>The previous key and IV are zeroed before the new values are copied in
