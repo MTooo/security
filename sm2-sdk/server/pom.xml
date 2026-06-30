@@ -46,6 +46,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Spring Web MVC (HandlerInterceptor, ResponseBodyAdvice) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Spring Context -->
         <dependency>
             <groupId>org.springframework</groupId>
