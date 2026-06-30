@@ -48,6 +48,7 @@
         <mockito.version>5.8.0</mockito.version>
 
         <!-- 插件 -->
+        <proguard.version>7.4.2</proguard.version>
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.3</maven-shade-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -157,6 +158,30 @@
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.github.wvengen</groupId>
+                    <artifactId>proguard-maven-plugin</artifactId>
+                    <version>${proguard.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals><goal>proguard</goal></goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <proguardVersion>7.4.2</proguardVersion>
+                        <injar>${project.build.finalName}.jar</injar>
+                        <outjar>${project.build.finalName}-obfuscated.jar</outjar>
+                        <obfuscate>true</obfuscate>
+                        <options>
+                            <option>-target 1.8</option>
+                        </options>
+                        <libs>
+                            <lib>${java.home}/jmods</lib>
+                        </libs>
                     </configuration>
                 </plugin>
 

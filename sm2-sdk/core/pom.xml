@@ -85,4 +85,25 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- 发布构建：启用 ProGuard 混淆 -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.wvengen</groupId>
+                        <artifactId>proguard-maven-plugin</artifactId>
+                        <configuration>
+                            <proguardInclude>${project.basedir}/../proguard.pro</proguardInclude>
+                            <libs>
+                                <lib>${java.home}/jmods</lib>
+                            </libs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

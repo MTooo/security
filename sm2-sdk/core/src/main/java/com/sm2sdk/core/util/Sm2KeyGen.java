@@ -16,13 +16,19 @@ import java.security.SecureRandom;
 /**
  * SM2 密钥对生成工具。
  *
- * <p>在项目根目录执行：
+ * <p>使用分发的 JAR 直接运行：
+ * <pre>{@code
+ *   # 方式一：使用核心 JAR（需要 bcprov 在 classpath 上）
+ *   java -cp sm2-sdk-core-1.0.0.jar;bcprov-jdk18on-1.84.jar com.sm2sdk.core.util.Sm2KeyGen
+ *
+ *   # 方式二：使用 Spring Boot Starter JAR（已内置所有依赖）
+ *   java -cp sm2-sdk-spring-boot-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen 3
+ * }</pre>
+ *
+ * <p>开发期间使用 Maven：
  * <pre>{@code
  *   mvn exec:java -pl core -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" -Dexec.args="2"
  * }</pre>
- *
- * <p>输出可直接填入 {@code application.yml} 的 {@code sm2.sdk.sm2-private-key}
- * 和 {@code sm2.sdk.sm2-public-key}。
  */
 public class Sm2KeyGen {
 
@@ -31,30 +37,36 @@ public class Sm2KeyGen {
     public static void main(String[] args) {
         int count = 1;
         if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
+            try {
+                count = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("用法: java ... Sm2KeyGen [数量]");
+                System.exit(1);
+            }
         }
 
         ECDomainParameters domain = new ECDomainParameters(
                 CURVE.getCurve(), CURVE.getG(), CURVE.getN(), CURVE.getH());
+        SecureRandom random = new SecureRandom();
 
         for (int i = 1; i <= count; i++) {
-            if (count > 1) System.out.println("========== 密钥对 #" + i + " ==========");
-
             ECKeyPairGenerator gen = new ECKeyPairGenerator();
-            gen.init(new ECKeyGenerationParameters(domain, new SecureRandom()));
+            gen.init(new ECKeyGenerationParameters(domain, random));
             AsymmetricCipherKeyPair pair = gen.generateKeyPair();
 
-            // 私钥: 32 字节 → 64 hex
             byte[] priv = bigIntToFixedBytes(
                     ((ECPrivateKeyParameters) pair.getPrivate()).getD(), 32);
-            System.out.println("sm2-private-key: " + Hex.toHexString(priv));
-
-            // 公钥: 04 || x || y，共 65 字节 → 130 hex
             ECPublicKeyParameters pub = (ECPublicKeyParameters) pair.getPublic();
-            byte[] x = bigIntToFixedBytes(pub.getQ().getAffineXCoord().toBigInteger(), 32);
-            byte[] y = bigIntToFixedBytes(pub.getQ().getAffineYCoord().toBigInteger(), 32);
-            System.out.println("sm2-public-key:  " +
-                    "04" + Hex.toHexString(x) + Hex.toHexString(y));
+            byte[] x = bigIntToFixedBytes(
+                    pub.getQ().getAffineXCoord().toBigInteger(), 32);
+            byte[] y = bigIntToFixedBytes(
+                    pub.getQ().getAffineYCoord().toBigInteger(), 32);
+
+            if (count > 1) {
+                System.out.println("===== 密钥对 #" + i + " =====");
+            }
+            System.out.println("sm2-private-key: " + Hex.toHexString(priv));
+            System.out.println("sm2-public-key:  " + "04" + Hex.toHexString(x) + Hex.toHexString(y));
             System.out.println();
         }
     }
