@@ -66,6 +66,13 @@
                 <version>${hutool.version}</version>
             </dependency>
 
+            <!-- BouncyCastle (SM2/SM3/SM4 算法底层实现，jdk18on 兼容 JDK 8/11/17/21) -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>1.84</version>
+            </dependency>
+
             <!-- Jackson BOM -->
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>

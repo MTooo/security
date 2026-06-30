@@ -24,6 +24,12 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+        <!-- BouncyCastle - 国密 SM2/SM3/SM4 底层加密提供者（jdk18on 兼容 JDK 8/11/17/21） -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+        </dependency>
+
         <!-- Jackson - JSON processing (to be shaded) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

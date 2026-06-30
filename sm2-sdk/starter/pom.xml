@@ -97,6 +97,10 @@
                                     <pattern>com.fasterxml.jackson</pattern>
                                     <shadedPattern>com.sm2sdk.third.jackson</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.bouncycastle</pattern>
+                                    <shadedPattern>com.sm2sdk.third.bouncycastle</shadedPattern>
+                                </relocation>
                             </relocations>
                             <filters>
                                 <filter>
