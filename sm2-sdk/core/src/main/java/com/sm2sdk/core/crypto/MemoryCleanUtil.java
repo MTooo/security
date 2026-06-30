@@ -21,11 +21,32 @@ public final class MemoryCleanUtil {
     /**
      * 清除密钥字节数组，将其内容全部置零。
      *
+     * <p>清零后主动调用 {@link System#gc()} 提示 JVM 执行垃圾回收，
+     * 以尽量降低敏感数据在内存中残留的时间。此行为是最佳努力（best-effort），
+     * 不保证立即回收。
+     *
      * @param key 要清除的密钥字节数组；若为 {@code null} 则不执行任何操作
      */
     public static void cleanKey(byte[] key) {
         if (key != null) {
             Arrays.fill(key, (byte) 0);
+            // best-effort 提示 JVM 回收，降低敏感数据残留时间
+            System.gc();
+        }
+    }
+
+    /**
+     * 批量清除多个密钥字节数组，将其内容全部置零。
+     *
+     * <p>遍历所有传入的数组并逐个调用 {@link #cleanKey(byte[])}。
+     *
+     * @param keys 要清除的密钥字节数组列表；若为 {@code null} 或空则不执行任何操作
+     */
+    public static void cleanKeys(byte[]... keys) {
+        if (keys != null) {
+            for (byte[] key : keys) {
+                cleanKey(key);
+            }
         }
     }
 }

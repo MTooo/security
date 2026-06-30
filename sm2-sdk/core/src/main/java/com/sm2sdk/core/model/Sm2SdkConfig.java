@@ -37,6 +37,9 @@ public class Sm2SdkConfig {
     /** Default session cleanup interval: 1 minute. */
     public static final long DEFAULT_SESSION_CLEANUP_INTERVAL_MS = 60_000L;
 
+    /** Default Redis key prefix. */
+    public static final String DEFAULT_REDIS_KEY_PREFIX = "sm2";
+
     // ========== Fields ==========
 
     private String sm2PrivateKey;
@@ -48,6 +51,8 @@ public class Sm2SdkConfig {
     private int maxSessionRequests = DEFAULT_MAX_SESSION_REQUESTS;
     private int maxSessions = DEFAULT_MAX_SESSIONS;
     private long sessionCleanupIntervalMs = DEFAULT_SESSION_CLEANUP_INTERVAL_MS;
+    private String redisKeyPrefix = DEFAULT_REDIS_KEY_PREFIX;
+    private String localSecretKey;
     private List<PeerConfig> peerConfigs = new ArrayList<>();
     private ClientAccessConfig clientAccessConfig;
 
@@ -129,6 +134,45 @@ public class Sm2SdkConfig {
         this.sessionCleanupIntervalMs = sessionCleanupIntervalMs;
     }
 
+    /**
+     * 获取 Redis key 前缀。
+     *
+     * @return Redis key 前缀，默认 "sm2"
+     */
+    public String getRedisKeyPrefix() {
+        return redisKeyPrefix;
+    }
+
+    /**
+     * 设置 Redis key 前缀。
+     *
+     * @param redisKeyPrefix Redis key 前缀
+     */
+    public void setRedisKeyPrefix(String redisKeyPrefix) {
+        this.redisKeyPrefix = redisKeyPrefix;
+    }
+
+    /**
+     * 获取本地加密密钥（Base64 编码的 AES 密钥）。
+     *
+     * <p>用于加密保护存储在 Redis 中的会话 SM4 密钥。若未配置，SM4 密钥将以
+     * Base64 编码（非加密）形式存储。
+     *
+     * @return 本地加密密钥（Base64 编码），可能为 null
+     */
+    public String getLocalSecretKey() {
+        return localSecretKey;
+    }
+
+    /**
+     * 设置本地加密密钥（Base64 编码的 AES 密钥）。
+     *
+     * @param localSecretKey 本地加密密钥（Base64 编码）
+     */
+    public void setLocalSecretKey(String localSecretKey) {
+        this.localSecretKey = localSecretKey;
+    }
+
     public List<PeerConfig> getPeerConfigs() {
         return peerConfigs;
     }
@@ -189,6 +233,28 @@ public class Sm2SdkConfig {
 
     public Sm2SdkConfig withSessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
         this.sessionCleanupIntervalMs = sessionCleanupIntervalMs;
+        return this;
+    }
+
+    /**
+     * 设置 Redis key 前缀并返回当前配置实例。
+     *
+     * @param redisKeyPrefix Redis key 前缀
+     * @return 当前配置实例
+     */
+    public Sm2SdkConfig withRedisKeyPrefix(String redisKeyPrefix) {
+        this.redisKeyPrefix = redisKeyPrefix;
+        return this;
+    }
+
+    /**
+     * 设置本地加密密钥并返回当前配置实例。
+     *
+     * @param localSecretKey 本地加密密钥（Base64 编码的 AES 密钥）
+     * @return 当前配置实例
+     */
+    public Sm2SdkConfig withLocalSecretKey(String localSecretKey) {
+        this.localSecretKey = localSecretKey;
         return this;
     }
 
@@ -259,6 +325,16 @@ public class Sm2SdkConfig {
 
         public Builder sessionCleanupIntervalMs(long sessionCleanupIntervalMs) {
             config.setSessionCleanupIntervalMs(sessionCleanupIntervalMs);
+            return this;
+        }
+
+        public Builder redisKeyPrefix(String redisKeyPrefix) {
+            config.setRedisKeyPrefix(redisKeyPrefix);
+            return this;
+        }
+
+        public Builder localSecretKey(String localSecretKey) {
+            config.setLocalSecretKey(localSecretKey);
             return this;
         }
 
