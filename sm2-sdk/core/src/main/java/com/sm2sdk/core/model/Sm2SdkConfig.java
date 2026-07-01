@@ -427,64 +427,193 @@ public class Sm2SdkConfig {
     }
 
     /**
-     * Access-control configuration for the client SDK.
+     * A single client access rule associating a client identifier with
+     * permitted path patterns.
      *
-     * <p>Defines which request paths the client is permitted to reach.
+     * <p>Path patterns use Ant-style wildcards:
+     * {@code ?} matches one character, {@code *} matches zero or more
+     * characters within a path segment, {@code **} matches zero or more
+     * directories.
      */
-    public static final class ClientAccessConfig {
+    public static final class ClientAccessRule {
 
+        private String clientId;
         private List<String> paths = new ArrayList<>();
 
-        public ClientAccessConfig() {
+        public ClientAccessRule() {
         }
 
-        public ClientAccessConfig(List<String> paths) {
+        public ClientAccessRule(String clientId, List<String> paths) {
+            this.clientId = clientId;
             this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
         }
 
-        public List<String> getPaths() {
-            return paths;
-        }
+        public String getClientId() { return clientId; }
+        public void setClientId(String clientId) { this.clientId = clientId; }
 
+        public List<String> getPaths() { return paths; }
         public void setPaths(List<String> paths) {
             this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
         }
 
-        // Fluent setters
-
-        public ClientAccessConfig withPaths(List<String> paths) {
+        public ClientAccessRule withClientId(String clientId) {
+            this.clientId = clientId; return this;
+        }
+        public ClientAccessRule withPaths(List<String> paths) {
             this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
             return this;
         }
-
-        public ClientAccessConfig addPath(String path) {
-            this.paths.add(path);
-            return this;
-        }
-
-        /**
-         * Returns an unmodifiable view of the permitted paths.
-         */
-        public List<String> getUnmodifiablePaths() {
-            return Collections.unmodifiableList(paths);
+        public ClientAccessRule addPath(String path) {
+            this.paths.add(path); return this;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ClientAccessConfig that = (ClientAccessConfig) o;
-            return Objects.equals(paths, that.paths);
+            if (!(o instanceof ClientAccessRule)) return false;
+            ClientAccessRule that = (ClientAccessRule) o;
+            return Objects.equals(clientId, that.clientId)
+                    && Objects.equals(paths, that.paths);
         }
-
         @Override
-        public int hashCode() {
-            return Objects.hash(paths);
-        }
-
+        public int hashCode() { return Objects.hash(clientId, paths); }
         @Override
         public String toString() {
-            return "ClientAccessConfig{paths=" + paths + '}';
+            return "ClientAccessRule{clientId='" + clientId + "', paths=" + paths + '}';
+        }
+    }
+
+    /**
+     * Access-control configuration for the server-side.
+     *
+     * <p>Defines which clients can access which request paths.
+     */
+    public static final class ClientAccessConfig {
+
+        /** Whether access control is enabled. Default false (backwards compatible). */
+        private boolean enabled;
+
+        /**
+         * Default policy when no rule matches a client.
+         * {@code "allow"} (default) or {@code "deny"}.
+         */
+        private String defaultPolicy = "allow";
+
+        /** Per-client access rules. */
+        private List<ClientAccessRule> rules = new ArrayList<>();
+
+        /**
+         * @deprecated Use {@link #rules} with a catch-all rule instead.
+         */
+        @Deprecated
+        private List<String> paths = new ArrayList<>();
+
+        public ClientAccessConfig() {
+        }
+
+        /** @deprecated Use the no-arg constructor and set rules instead. */
+        @Deprecated
+        public ClientAccessConfig(List<String> paths) {
+            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
+        }
+
+        // ── getters / setters ──
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+        public String getDefaultPolicy() { return defaultPolicy; }
+        public void setDefaultPolicy(String defaultPolicy) {
+            this.defaultPolicy = defaultPolicy != null ? defaultPolicy : "allow";
+        }
+
+        public List<ClientAccessRule> getRules() { return rules; }
+        public void setRules(List<ClientAccessRule> rules) {
+            this.rules = rules != null ? new ArrayList<>(rules) : new ArrayList<>();
+        }
+
+        /** @deprecated Use {@link #getRules()} instead. */
+        @Deprecated
+        public List<String> getPaths() { return paths; }
+        /** @deprecated Use {@link #setRules(List)} instead. */
+        @Deprecated
+        public void setPaths(List<String> paths) {
+            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
+        }
+
+        // ── fluent setters ──
+
+        public ClientAccessConfig withEnabled(boolean enabled) {
+            this.enabled = enabled; return this;
+        }
+        public ClientAccessConfig withDefaultPolicy(String defaultPolicy) {
+            this.defaultPolicy = defaultPolicy; return this;
+        }
+        public ClientAccessConfig withRules(List<ClientAccessRule> rules) {
+            this.rules = rules != null ? new ArrayList<>(rules) : new ArrayList<>();
+            return this;
+        }
+        public ClientAccessConfig addRule(ClientAccessRule rule) {
+            this.rules.add(rule); return this;
+        }
+        /** @deprecated Use {@link #addRule(ClientAccessRule)} instead. */
+        @Deprecated
+        public ClientAccessConfig withPaths(List<String> paths) {
+            this.paths = paths != null ? new ArrayList<>(paths) : new ArrayList<>();
+            return this;
+        }
+        /** @deprecated Use {@link #addRule(ClientAccessRule)} instead. */
+        @Deprecated
+        public ClientAccessConfig addPath(String path) {
+            this.paths.add(path); return this;
+        }
+
+        /**
+         * Returns an unmodifiable view of the permitted paths from the
+         * deprecated flat list.  Prefer {@link #getRules()}.
+         *
+         * @deprecated Use {@link #getRules()} instead.
+         */
+        @Deprecated
+        public List<String> getUnmodifiablePaths() {
+            return Collections.unmodifiableList(paths);
+        }
+
+        /**
+         * Resolves rules for access checking.  New-style {@link #rules}
+         * take precedence.  If neither rules nor the legacy paths list is
+         * populated an empty list is returned.
+         */
+        public List<ClientAccessRule> resolveRules() {
+            if (!rules.isEmpty()) {
+                return Collections.unmodifiableList(rules);
+            }
+            if (!paths.isEmpty()) {
+                return Collections.singletonList(
+                        new ClientAccessRule("", new ArrayList<>(paths)));
+            }
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ClientAccessConfig)) return false;
+            ClientAccessConfig that = (ClientAccessConfig) o;
+            return enabled == that.enabled
+                    && Objects.equals(defaultPolicy, that.defaultPolicy)
+                    && Objects.equals(rules, that.rules)
+                    && Objects.equals(paths, that.paths);
+        }
+        @Override
+        public int hashCode() {
+            return Objects.hash(enabled, defaultPolicy, rules, paths);
+        }
+        @Override
+        public String toString() {
+            return "ClientAccessConfig{enabled=" + enabled +
+                    ", defaultPolicy='" + defaultPolicy + '\'' +
+                    ", rules=" + rules + '}';
         }
     }
 

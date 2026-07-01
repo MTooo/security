@@ -1,8 +1,8 @@
+# SM2 SDK Demo — Spring Boot 3.2
 sm2:
   sdk:
-    sm2-private-key: "${SM2_PRIVATE_KEY:your-private-key-hex}"
-    sm2-public-key: "${SM2_PUBLIC_KEY:your-public-key-hex}"
-    server-url: "${SM2_SERVER_URL:https://peer.example.com}"
-    session-timeout-ms: 600000
-server:
-  port: 8080
+    # 测试用密钥对（由 Sm2KeyGen 生成）
+    sm2-private-key: "3f5731fe1b6468d29b016069e2bf60630e03bcab651aa701cac39bd2e48970f0"
+    sm2-public-key: "04182d88d7d8bbfb3510e14fa1f22d5df8c2f3399d66cb9924d21543c3e2199424c605f3dbeaea2f4f8902a0de3d5eb331481a45c26eccc7c231a4b8bfa1c6228b"
+    # 指向自身，演示客户端→服务端闭环
+    server-url: "http://localhost:8080"

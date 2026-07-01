@@ -194,20 +194,30 @@ public class Sm2Request {
         String plainJson = buildPlainJson();
 
         // 步骤 4: 使用会话密钥加密
-        String ciphertext;
-        try {
-            ciphertext = sessionManager.encryptBody(sessionId, plainJson);
-        } catch (Exception e) {
-            throw new Sm2SdkException(ErrorCode.SM4_ENCRYPT_FAILED,
-                    "请求体加密失败: " + e.getMessage(), e);
+        String ciphertext = null;
+        if (!plainJson.isEmpty()) {
+            try {
+                ciphertext = sessionManager.encryptBody(sessionId, plainJson);
+            } catch (Exception e) {
+                throw new Sm2SdkException(ErrorCode.SM4_ENCRYPT_FAILED,
+                        "请求体加密失败: " + e.getMessage(), e);
+            }
         }
 
         // 步骤 5: 构建 HTTP 请求并发送
         String url = config.getServerUrl() + path;
         Map<String, String> headers = buildHeaders(sessionId);
+        boolean isGetOrDelete = "GET".equalsIgnoreCase(httpMethod)
+                || "DELETE".equalsIgnoreCase(httpMethod);
+        // GET/DELETE: 加密参数通过 X-Sm2-Query header 传递，不放在 body 里
+        if (isGetOrDelete && ciphertext != null) {
+            headers.put("X-Sm2-Query", ciphertext);
+            ciphertext = null;
+        }
+        final String bodyToSend = ciphertext;
         HttpResponse httpResponse;
         try {
-            httpResponse = sendHttpRequest(httpMethod, url, headers, ciphertext);
+            httpResponse = sendHttpRequest(httpMethod, url, headers, bodyToSend);
         } catch (Exception e) {
             throw new Sm2SdkException(ErrorCode.HTTP_REQUEST_FAILED,
                     "HTTP 请求失败: " + e.getMessage(), e);

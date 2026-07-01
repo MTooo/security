@@ -296,6 +296,8 @@ class Sm2RequestTest {
 
         Sm2Request request = new Sm2Request("GET", "/api/encrypt-test", config, sessionManager,
                 objectMapper, SESSION_ID);
+        // GET 带参数才会触发加密（参数 → JSON → SM4 加密 → X-Sm2-Query header）
+        request.param("key", "value");
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);

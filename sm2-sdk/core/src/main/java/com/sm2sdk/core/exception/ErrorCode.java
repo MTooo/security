@@ -46,6 +46,7 @@ public enum ErrorCode {
     SESSION_TAMPERED("22302", 500, "会话被篡改(Redis数据异常)"),
     SESSION_COUNT_EXCEEDED("12303", 429, "会话数超过上限"),
     REQUEST_RATE_LIMIT_EXCEEDED("22501", 429, "请求频率超限"),
+    CLIENT_ACCESS_DENIED("22502", 403, "客户端无权访问该路径"),
 
     // ========== General Errors (B=9, 6 codes) ==========
     UNKNOWN_ERROR("39000", 500, "未知异常"),

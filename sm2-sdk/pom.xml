@@ -28,7 +28,7 @@
         <maven.compiler.release>8</maven.compiler.release>
 
         <!-- 核心依赖 -->
-        <hutool.version>5.8.32</hutool.version>
+        <hutool.version>5.8.46</hutool.version>
         <jackson.version>2.15.4</jackson.version>
         <caffeine.version>2.9.3</caffeine.version>
         <slf4j.version>2.0.9</slf4j.version>

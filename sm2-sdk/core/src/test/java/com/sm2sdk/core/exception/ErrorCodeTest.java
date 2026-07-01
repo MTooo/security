@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class ErrorCodeTest {
 
     @Test
-    void shouldHaveAll35ErrorCodes() {
-        assertEquals(35, ErrorCode.values().length);
+    void shouldHaveAll36ErrorCodes() {
+        assertEquals(36, ErrorCode.values().length);
     }
 
     // ========== Client Error Codes ==========

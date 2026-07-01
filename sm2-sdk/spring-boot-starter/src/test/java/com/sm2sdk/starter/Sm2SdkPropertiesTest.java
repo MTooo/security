@@ -125,8 +125,9 @@ class Sm2SdkPropertiesTest {
         Sm2SdkConfig config = properties.toSdkConfig();
 
         assertNotNull(config.getClientAccessConfig());
-        assertEquals(2, config.getClientAccessConfig().getPaths().size());
-        assertTrue(config.getClientAccessConfig().getPaths().contains("/api/data"));
+        // 旧 paths 被转换为 catch-all 规则（clientId=""）
+        assertEquals(1, config.getClientAccessConfig().getRules().size());
+        assertEquals(2, config.getClientAccessConfig().getRules().get(0).getPaths().size());
     }
 
     @Test

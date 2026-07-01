@@ -89,7 +89,7 @@ class SessionManagerTest {
         when(config.getSessionTimeoutMs()).thenReturn(300_000L);
         when(config.getMaxSessionRequests()).thenReturn(1000);
 
-        sessionManager = new SessionManager(keyExchange, sm4Crypto, sessionStore, config);
+        sessionManager = new SessionManager(() -> keyExchange, sm4Crypto, sessionStore, config);
     }
 
     // ========== 握手创建会话 ==========

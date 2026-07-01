@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * 会话编排中心，协调密钥交换、加解密、会话存储。
@@ -45,7 +46,7 @@ public class SessionManager {
     /** SM4 密钥派生所需的比特长度（16 字节密钥 + 12 字节 IV = 28 字节 = 224 比特）。 */
     private static final int KDF_SM4_BITS = 480;
 
-    private final Sm2KeyExchange keyExchange;
+    private final Supplier<Sm2KeyExchange> keyExchangeSupplier;
     private final Sm4Crypto sm4Crypto;
     private final SessionStore sessionStore;
     private final Sm2SdkConfig config;
@@ -55,35 +56,58 @@ public class SessionManager {
     private final ConcurrentHashMap<String, byte[]> sharedKeyCache = new ConcurrentHashMap<>();
 
     /**
-     * 创建 SessionManager 实例。
+     * 创建 SessionManager 实例（使用 {@link Supplier} 模式，每次握手获取独立实例）。
      *
-     * @param keyExchange  SM2 密钥交换实现
-     * @param sm4Crypto    SM4 加解密实现
-     * @param sessionStore 会话存储实现
-     * @param config       SDK 配置
+     * @param keyExchangeSupplier SM2 密钥交换实现工厂
+     * @param sm4Crypto           SM4 加解密实现
+     * @param sessionStore        会话存储实现
+     * @param config              SDK 配置
      */
-    public SessionManager(Sm2KeyExchange keyExchange, Sm4Crypto sm4Crypto,
+    public SessionManager(Supplier<Sm2KeyExchange> keyExchangeSupplier, Sm4Crypto sm4Crypto,
                           SessionStore sessionStore, Sm2SdkConfig config) {
-        this(keyExchange, sm4Crypto, sessionStore, config, null);
+        this(keyExchangeSupplier, sm4Crypto, sessionStore, config, null);
     }
 
     /**
-     * 创建 SessionManager 实例（含可选的 NonceValidator）。
+     * 创建 SessionManager 实例（含可选的 NonceValidator，使用 {@link Supplier} 模式）。
      *
-     * @param keyExchange     SM2 密钥交换实现
-     * @param sm4Crypto       SM4 加解密实现
-     * @param sessionStore    会话存储实现
-     * @param config          SDK 配置
-     * @param nonceValidator  Nonce 重放验证器（可选，可为 null）
+     * @param keyExchangeSupplier SM2 密钥交换实现工厂（每次调用返回新实例）
+     * @param sm4Crypto           SM4 加解密实现
+     * @param sessionStore        会话存储实现
+     * @param config              SDK 配置
+     * @param nonceValidator      Nonce 重放验证器（可选，可为 null）
      */
-    public SessionManager(Sm2KeyExchange keyExchange, Sm4Crypto sm4Crypto,
+    public SessionManager(Supplier<Sm2KeyExchange> keyExchangeSupplier, Sm4Crypto sm4Crypto,
                           SessionStore sessionStore, Sm2SdkConfig config,
                           NonceValidator nonceValidator) {
-        this.keyExchange = Objects.requireNonNull(keyExchange, "keyExchange must not be null");
+        this.keyExchangeSupplier = Objects.requireNonNull(keyExchangeSupplier,
+                "keyExchangeSupplier must not be null");
         this.sm4Crypto = Objects.requireNonNull(sm4Crypto, "sm4Crypto must not be null");
         this.sessionStore = Objects.requireNonNull(sessionStore, "sessionStore must not be null");
         this.config = Objects.requireNonNull(config, "config must not be null");
         this.nonceValidator = nonceValidator;
+    }
+
+    /**
+     * @deprecated 请使用 {@link #SessionManager(Supplier, Sm4Crypto, SessionStore, Sm2SdkConfig)}，
+     *             传入 {@code () -> new HutoolSm2KeyExchange()} 等工厂方法，
+     *             确保每次握手获取独立的密钥交换实例。
+     */
+    @Deprecated
+    public SessionManager(Sm2KeyExchange keyExchange, Sm4Crypto sm4Crypto,
+                          SessionStore sessionStore, Sm2SdkConfig config) {
+        this(() -> keyExchange, sm4Crypto, sessionStore, config, null);
+    }
+
+    /**
+     * @deprecated 请使用 {@link #SessionManager(Supplier, Sm4Crypto, SessionStore, Sm2SdkConfig, NonceValidator)}，
+     *             传入工厂方法以确保每次握手获取独立的密钥交换实例。
+     */
+    @Deprecated
+    public SessionManager(Sm2KeyExchange keyExchange, Sm4Crypto sm4Crypto,
+                          SessionStore sessionStore, Sm2SdkConfig config,
+                          NonceValidator nonceValidator) {
+        this(() -> keyExchange, sm4Crypto, sessionStore, config, nonceValidator);
     }
 
     // ==================== 握手方法 ====================
@@ -108,6 +132,7 @@ public class SessionManager {
         byte[] clientPrivKey = hexToBytes(config.getSm2PrivateKey());
         byte[] serverPubKey = hexToBytes(peer.getPublicKey());
 
+        Sm2KeyExchange keyExchange = getKeyExchange();
         try {
             // Step 1: 构建初始化请求
             HandshakeInit init = keyExchange.buildInitRequest(
@@ -179,6 +204,7 @@ public class SessionManager {
         byte[] serverPrivKey = hexToBytes(config.getSm2PrivateKey());
         byte[] clientPubKey = hexToBytes(config.getSm2PublicKey());
 
+        Sm2KeyExchange keyExchange = getKeyExchange();
         try {
             // 服务端处理客户端初始化请求
             Sm2KeyExchange.HandshakeResult result = keyExchange.processClientInit(
@@ -428,7 +454,7 @@ public class SessionManager {
      * @return SM2 密钥交换实现
      */
     public Sm2KeyExchange getKeyExchange() {
-        return keyExchange;
+        return keyExchangeSupplier.get();
     }
 
     /**

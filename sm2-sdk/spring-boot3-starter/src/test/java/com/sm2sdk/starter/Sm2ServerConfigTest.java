@@ -27,7 +27,7 @@ class Sm2ServerConfigTest {
     void testCustomPaths() {
         Sm2SdkConfig sdkConfig = new Sm2SdkConfig();
         Sm2ServerConfig config = new Sm2ServerConfig(sdkConfig,
-                "/custom/init", "/custom/confirm", false);
+                "/custom/init", "/custom/confirm", false, null);
 
         assertEquals("/custom/init", config.getHandshakeInitPath());
         assertEquals("/custom/confirm", config.getHandshakeConfirmPath());
@@ -37,7 +37,7 @@ class Sm2ServerConfigTest {
     @Test
     void testNullPathsFallbackToDefaults() {
         Sm2SdkConfig sdkConfig = new Sm2SdkConfig();
-        Sm2ServerConfig config = new Sm2ServerConfig(sdkConfig, null, null, true);
+        Sm2ServerConfig config = new Sm2ServerConfig(sdkConfig, null, null, true, null);
 
         assertEquals(Sm2ServerConfig.DEFAULT_HANDSHAKE_INIT_PATH,
                 config.getHandshakeInitPath());

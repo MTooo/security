@@ -205,8 +205,24 @@ public class Sm2SdkProperties {
 
         // 转换客户端访问控制配置
         if (clientAccess != null) {
-            Sm2SdkConfig.ClientAccessConfig accessConfig =
-                    new Sm2SdkConfig.ClientAccessConfig(clientAccess.getPaths());
+            Sm2SdkConfig.ClientAccessConfig accessConfig = new Sm2SdkConfig.ClientAccessConfig();
+            accessConfig.setEnabled(clientAccess.isEnabled());
+            accessConfig.setDefaultPolicy(clientAccess.getDefaultPolicy());
+
+            if (clientAccess.getRules() != null) {
+                for (ClientAccessRuleProperties rp : clientAccess.getRules()) {
+                    accessConfig.addRule(new Sm2SdkConfig.ClientAccessRule(
+                            rp.getClientId(), rp.getPaths()));
+                }
+            }
+
+            // 向后兼容：旧 paths 在没有 rules 时自动包装为 catch-all 规则
+            if (clientAccess.getPaths() != null && !clientAccess.getPaths().isEmpty()
+                    && (clientAccess.getRules() == null || clientAccess.getRules().isEmpty())) {
+                accessConfig.addRule(new Sm2SdkConfig.ClientAccessRule(
+                        "", new ArrayList<>(clientAccess.getPaths())));
+            }
+
             config.setClientAccessConfig(accessConfig);
         }
 
@@ -244,17 +260,65 @@ public class Sm2SdkProperties {
     }
 
     /**
+     * 客户端访问规则属性，映射 YAML 中 {@code rules} 列表的单个条目。
+     */
+    public static class ClientAccessRuleProperties {
+
+        /** 客户端标识。空或 null 表示匹配所有客户端的 catch-all 规则。 */
+        private String clientId;
+
+        /** 该客户端允许访问的路径模式（Ant 风格）。 */
+        private List<String> paths = new ArrayList<>();
+
+        public String getClientId() { return clientId; }
+        public void setClientId(String clientId) { this.clientId = clientId; }
+
+        public List<String> getPaths() { return paths; }
+        public void setPaths(List<String> paths) {
+            this.paths = paths != null ? paths : new ArrayList<>();
+        }
+    }
+
+    /**
      * 客户端访问控制属性。
      */
     public static class ClientAccessProperties {
 
-        /** 允许访问的路径列表 */
+        /** 是否启用客户端访问控制。默认 false 保持向后兼容。 */
+        private boolean enabled;
+
+        /**
+         * 无匹配规则时的默认策略。"allow"（默认）或 "deny"。
+         */
+        private String defaultPolicy = "allow";
+
+        /** 每客户端访问规则。 */
+        private List<ClientAccessRuleProperties> rules = new ArrayList<>();
+
+        /**
+         * @deprecated 改用 {@link #rules} 配置每客户端的路径。
+         */
+        @Deprecated
         private List<String> paths = new ArrayList<>();
 
-        public List<String> getPaths() {
-            return paths;
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+        public String getDefaultPolicy() { return defaultPolicy; }
+        public void setDefaultPolicy(String defaultPolicy) {
+            this.defaultPolicy = defaultPolicy;
         }
 
+        public List<ClientAccessRuleProperties> getRules() { return rules; }
+        public void setRules(List<ClientAccessRuleProperties> rules) {
+            this.rules = rules != null ? rules : new ArrayList<>();
+        }
+
+        /** @deprecated 改用 {@link #getRules()}。 */
+        @Deprecated
+        public List<String> getPaths() { return paths; }
+        /** @deprecated 改用 {@link #setRules(List)}。 */
+        @Deprecated
         public void setPaths(List<String> paths) {
             this.paths = paths != null ? paths : new ArrayList<>();
         }

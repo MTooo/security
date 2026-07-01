@@ -21,12 +21,16 @@ public class Sm2ServerConfig {
     /** 是否启用 Nonce 重放校验，默认启用 */
     public static final boolean DEFAULT_NONCE_VALIDATION_ENABLED = true;
 
+    /** 默认服务端标识（与客户端 AutoConfiguration 创建的 peerId 保持一致） */
+    public static final String DEFAULT_SERVER_ID = "default";
+
     // ========== 字段 ==========
 
     private final Sm2SdkConfig sdkConfig;
     private final String handshakeInitPath;
     private final String handshakeConfirmPath;
     private final boolean nonceValidationEnabled;
+    private final String serverId;
 
     /**
      * 从 SDK 全局配置构建服务端配置（使用默认值）。
@@ -35,7 +39,7 @@ public class Sm2ServerConfig {
      */
     public Sm2ServerConfig(Sm2SdkConfig sdkConfig) {
         this(sdkConfig, DEFAULT_HANDSHAKE_INIT_PATH, DEFAULT_HANDSHAKE_CONFIRM_PATH,
-                DEFAULT_NONCE_VALIDATION_ENABLED);
+                DEFAULT_NONCE_VALIDATION_ENABLED, DEFAULT_SERVER_ID);
     }
 
     /**
@@ -45,15 +49,19 @@ public class Sm2ServerConfig {
      * @param handshakeInitPath       握手初始化端点路径
      * @param handshakeConfirmPath    握手确认端点路径
      * @param nonceValidationEnabled  是否启用 Nonce 重放校验
+     * @param serverId                服务端标识（SM2 握手 ZB 计算中作为服务端身份字符串，
+     *                                须与客户端 peerId 匹配）
      */
     public Sm2ServerConfig(Sm2SdkConfig sdkConfig, String handshakeInitPath,
-                           String handshakeConfirmPath, boolean nonceValidationEnabled) {
+                           String handshakeConfirmPath, boolean nonceValidationEnabled,
+                           String serverId) {
         this.sdkConfig = Objects.requireNonNull(sdkConfig, "sdkConfig must not be null");
         this.handshakeInitPath = handshakeInitPath != null ? handshakeInitPath
                 : DEFAULT_HANDSHAKE_INIT_PATH;
         this.handshakeConfirmPath = handshakeConfirmPath != null ? handshakeConfirmPath
                 : DEFAULT_HANDSHAKE_CONFIRM_PATH;
         this.nonceValidationEnabled = nonceValidationEnabled;
+        this.serverId = serverId != null ? serverId : DEFAULT_SERVER_ID;
     }
 
     // ========== Getters ==========
@@ -74,12 +82,18 @@ public class Sm2ServerConfig {
         return nonceValidationEnabled;
     }
 
+    /** 获取服务端标识，默认 {@value #DEFAULT_SERVER_ID}。 */
+    public String getServerId() {
+        return serverId;
+    }
+
     @Override
     public String toString() {
         return "Sm2ServerConfig{" +
                 "handshakeInitPath='" + handshakeInitPath + '\'' +
                 ", handshakeConfirmPath='" + handshakeConfirmPath + '\'' +
                 ", nonceValidationEnabled=" + nonceValidationEnabled +
+                ", serverId='" + serverId + '\'' +
                 '}';
     }
 }

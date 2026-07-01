@@ -12,6 +12,9 @@ import com.sm2sdk.core.session.Session;
 import com.sm2sdk.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Base64;
 import java.util.Objects;
@@ -19,24 +22,13 @@ import java.util.Objects;
 /**
  * 服务端握手控制器，处理客户端发起的 SM2 密钥交换握手请求。
  *
- * <p>提供两个端点：
+ * <p>自动注册两个端点：
  * <ul>
  *   <li>{@code POST /handshake/init} — 处理客户端握手初始化请求</li>
  *   <li>{@code POST /handshake/confirm} — 验证客户端握手确认请求</li>
  * </ul>
- *
- * <p>使用方法：
- * <pre>{@code
- * Sm2ServerConfig config = new Sm2ServerConfig(sdkConfig);
- * Sm2HandshakeController controller = new Sm2HandshakeController(sessionManager, config);
- *
- * // 在 Spring MVC Controller 中委托：
- * @PostMapping("/handshake/init")
- * public HandshakeServerResp handleInit(@RequestBody HandshakeInit init) {
- *     return controller.handleInit(init);
- * }
- * }</pre>
  */
+@RestController
 public class Sm2HandshakeController {
 
     private static final Logger log = LoggerFactory.getLogger(Sm2HandshakeController.class);
@@ -71,7 +63,8 @@ public class Sm2HandshakeController {
      * @return 服务端握手响应（包含临时公钥 RB 和确认值 SB）
      * @throws Sm2SdkException 如果握手验证或密钥派生失败
      */
-    public HandshakeServerResp handleInit(HandshakeInit init) {
+    @PostMapping("/handshake/init")
+    public HandshakeServerResp handleInit(@RequestBody HandshakeInit init) {
         Objects.requireNonNull(init, "init must not be null");
         validateInit(init);
 
@@ -86,7 +79,8 @@ public class Sm2HandshakeController {
         try {
             // 步骤 1: 服务端处理客户端初始化请求
             Sm2KeyExchange.HandshakeResult result = keyExchange.processClientInit(
-                    init, serverPrivKey, clientPubKey, "server", init.getClientId());
+                    init, serverPrivKey, clientPubKey,
+                    config.getServerId(), init.getClientId());
 
             // 步骤 2: 获取 SB 确认值（HutoolSm2KeyExchange 专有方法）
             byte[] sbBytes = getConfirmationValue(keyExchange);
@@ -126,7 +120,8 @@ public class Sm2HandshakeController {
      * @param confirm 客户端发送的握手确认请求
      * @throws Sm2SdkException 如果确认验证失败
      */
-    public void handleConfirm(HandshakeConfirm confirm) {
+    @PostMapping("/handshake/confirm")
+    public void handleConfirm(@RequestBody HandshakeConfirm confirm) {
         Objects.requireNonNull(confirm, "confirm must not be null");
 
         String sessionId = confirm.getSessionId();
