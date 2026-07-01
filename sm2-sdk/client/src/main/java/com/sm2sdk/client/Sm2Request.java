@@ -80,6 +80,9 @@ public class Sm2Request {
     /** 请求体对象（POST/PUT） */
     private Object requestBody;
 
+    /** 幂等键（一次 execute() 生命周期内不变，跨重试复用） */
+    private String idempotencyKey;
+
     /** 当前会话 ID（自动维护） */
     private String currentSessionId;
 
@@ -465,7 +468,7 @@ public class Sm2Request {
         if (requestBody == null) {
             // POST 但无 body，创建一个仅含 _idempotencyKey 的 Map
             Map<String, Object> bodyMap = new LinkedHashMap<>();
-            bodyMap.put("_idempotencyKey", UUID.randomUUID().toString());
+            bodyMap.put("_idempotencyKey", getIdempotencyKey());
             return bodyMap;
         }
 
@@ -474,7 +477,7 @@ public class Sm2Request {
             @SuppressWarnings("unchecked")
             Map<String, Object> bodyMap = new LinkedHashMap<>((Map<String, Object>) requestBody);
             if (!bodyMap.containsKey("_idempotencyKey")) {
-                bodyMap.put("_idempotencyKey", UUID.randomUUID().toString());
+                bodyMap.put("_idempotencyKey", getIdempotencyKey());
             }
             return bodyMap;
         }
@@ -484,13 +487,34 @@ public class Sm2Request {
             @SuppressWarnings("unchecked")
             Map<String, Object> bodyMap = objectMapper.convertValue(requestBody, Map.class);
             if (!bodyMap.containsKey("_idempotencyKey")) {
-                bodyMap.put("_idempotencyKey", UUID.randomUUID().toString());
+                bodyMap.put("_idempotencyKey", getIdempotencyKey());
             }
             return bodyMap;
         } catch (Exception e) {
             // 非 Map 类型且不能转 Map，直接原样返回（_idempotencyKey 由调用方决定）
             return requestBody;
         }
+    }
+
+    /**
+     * 获取或生成幂等键，一次 {@link #execute(Class)} 生命周期内只生成一次。
+     */
+    private String getIdempotencyKey() {
+        if (idempotencyKey == null) {
+            idempotencyKey = UUID.randomUUID().toString();
+        }
+        return idempotencyKey;
+    }
+
+    /**
+     * 手动设置幂等键（可选，覆盖自动生成）。
+     *
+     * @param idempotencyKey 幂等键
+     * @return 当前请求实例（链式调用）
+     */
+    public Sm2Request idempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
+        return this;
     }
 
     /**
