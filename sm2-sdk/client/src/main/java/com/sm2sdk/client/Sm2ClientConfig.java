@@ -29,9 +29,13 @@ public class Sm2ClientConfig {
     public Sm2ClientConfig(Sm2SdkConfig config, String peerId) {
         Objects.requireNonNull(config, "config must not be null");
         Objects.requireNonNull(peerId, "peerId must not be null");
-        this.serverUrl = config.getServerUrl();
         this.peerId = peerId;
         this.peerConfig = findPeerConfig(config, peerId);
+        // server-url：优先顶层配置，回退到 PeerConfig
+        String topServerUrl = config.getServerUrl();
+        String peerServerUrl = (peerConfig != null) ? peerConfig.getServerUrl() : null;
+        this.serverUrl = (topServerUrl != null && !topServerUrl.isEmpty())
+                ? topServerUrl : peerServerUrl;
         // 优先使用 PeerConfig 中的 serverId，否则默认 "default"
         // 注意：不使用全局 serverId，因为那是"自己作为服务端"的标识
         String peerServerId = (peerConfig != null && peerConfig.getServerId() != null)

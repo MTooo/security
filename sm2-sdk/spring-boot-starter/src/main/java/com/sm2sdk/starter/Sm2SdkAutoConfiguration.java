@@ -14,11 +14,13 @@ import com.sm2sdk.core.session.impl.CaffeineSessionStore;
 import com.sm2sdk.core.session.impl.RedisSessionStore;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -143,11 +145,19 @@ public class Sm2SdkAutoConfiguration {
         return new Sm2ResponseBodyAdvice(sessionManager, serverConfig);
     }
 
+    // ==================== 异常处理 ====================
+
+    @Bean
+    @ConditionalOnMissingBean
+    public Sm2SdkExceptionHandler sm2SdkExceptionHandler() {
+        return new Sm2SdkExceptionHandler();
+    }
+
     // ==================== 客户端组件 ====================
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-url")
+    @Conditional(HasClientConfigCondition.class)
     public Sm2HttpClient sm2HttpClient(Sm2SdkConfig config,
                                        SessionManager sessionManager) {
         return new Sm2HttpClient(config, sessionManager,
@@ -180,6 +190,28 @@ public class Sm2SdkAutoConfiguration {
                 converters.add(0, encryptedBodyConverter);
             }
         };
+    }
+
+    // ==================== 条件判断 ====================
+
+    /**
+     * 满足以下任一条件时创建 {@link Sm2HttpClient}：
+     * <ul>
+     *   <li>配置了 {@code sm2.sdk.server-url}</li>
+     *   <li>配置了 {@code sm2.sdk.peers} 列表</li>
+     * </ul>
+     */
+    static class HasClientConfigCondition extends AnyNestedCondition {
+
+        HasClientConfigCondition() {
+            super(ConfigurationPhase.PARSE_CONFIGURATION);
+        }
+
+        @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-url")
+        static class HasServerUrl {}
+
+        @ConditionalOnProperty(prefix = "sm2.sdk", name = "peers")
+        static class HasPeers {}
     }
 
     // ==================== Redis 扩展（仅在 Spring Data Redis 可用时加载） ====================

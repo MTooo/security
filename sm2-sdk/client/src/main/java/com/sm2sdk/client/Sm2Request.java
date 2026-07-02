@@ -72,10 +72,10 @@ public class Sm2Request {
     private final ObjectMapper objectMapper;
 
     /** 查询参数 */
-    private final Map<String, String> params;
+    private final Map<String, Object> params;
 
     /** 自定义 HTTP 头 */
-    private final Map<String, String> customHeaders;
+    private final Map<String, Object> customHeaders;
 
     /** 请求体对象（POST/PUT） */
     private Object requestBody;
@@ -118,12 +118,12 @@ public class Sm2Request {
      * 添加查询参数（适用于 GET 和 DELETE 请求）。
      *
      * @param key   参数名
-     * @param value 参数值
+     * @param value 参数值，支持任意类型（Number、Boolean、String 等）
      * @return 当前请求实例（链式调用）
      */
-    public Sm2Request param(String key, String value) {
+    public Sm2Request param(String key, Object value) {
         Objects.requireNonNull(key, "key must not be null");
-        this.params.put(key, value != null ? value : "");
+        this.params.put(key, value);
         return this;
     }
 
@@ -131,12 +131,12 @@ public class Sm2Request {
      * 添加自定义 HTTP 头。
      *
      * @param key   头名称
-     * @param value 头值
+     * @param value 头值，支持任意类型，最终以 {@code toString()} 写入 HTTP 头
      * @return 当前请求实例（链式调用）
      */
-    public Sm2Request header(String key, String value) {
+    public Sm2Request header(String key, Object value) {
         Objects.requireNonNull(key, "key must not be null");
-        this.customHeaders.put(key, value != null ? value : "");
+        this.customHeaders.put(key, value);
         return this;
     }
 
@@ -379,11 +379,39 @@ public class Sm2Request {
                 .timeout(10000)
                 .execute();
         if (response.getStatus() != 200) {
+            String errorDetail = extractErrorDetail(response.body());
             throw new Sm2SdkException(ErrorCode.HTTP_REQUEST_FAILED,
                     "握手请求失败: HTTP " + response.getStatus()
-                            + ", url=" + url + ", body=" + response.body());
+                            + ", url=" + url + ", " + errorDetail);
         }
         return response.body();
+    }
+
+    /**
+     * 从错误响应体中提取可读的错误信息。
+     * 如果响应是 SDK 返回的 JSON 格式，则解析错误码和消息；否则截取纯文本。
+     */
+    private String extractErrorDetail(String responseBody) {
+        if (responseBody == null || responseBody.isEmpty()) {
+            return "无响应体";
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> errorMap = objectMapper.readValue(responseBody, Map.class);
+            if (errorMap.containsKey("code") && errorMap.containsKey("message")) {
+                return String.format("errorCode=%s, message=%s, detail=%s",
+                        errorMap.get("code"),
+                        errorMap.get("message"),
+                        errorMap.getOrDefault("detail", ""));
+            }
+        } catch (Exception ignored) {
+            // 不是 JSON，使用原始文本
+        }
+        // 截断过长的 HTML 等非 JSON 响应
+        if (responseBody.length() > 500) {
+            return responseBody.substring(0, 500) + "...";
+        }
+        return responseBody;
     }
 
     /**
@@ -420,7 +448,11 @@ public class Sm2Request {
      * @return 请求头 Map
      */
     private Map<String, String> buildHeaders(String sessionId) {
-        Map<String, String> headers = new HashMap<>(customHeaders);
+        Map<String, String> headers = new HashMap<>();
+        for (Map.Entry<String, Object> entry : customHeaders.entrySet()) {
+            Object value = entry.getValue();
+            headers.put(entry.getKey(), value != null ? value.toString() : "");
+        }
         headers.put("X-Session-Id", sessionId);
         headers.put("X-Timestamp", String.valueOf(System.currentTimeMillis()));
         headers.put("X-Nonce", UUID.randomUUID().toString());

@@ -28,24 +28,24 @@ public class Sm2QueryDecryptFilter implements Filter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws java.io.IOException, jakarta.servlet.ServletException {
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+
+        String encryptedQuery = request.getHeader("X-Sm2-Query");
+        if (encryptedQuery == null || encryptedQuery.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String sessionId = request.getHeader("X-Session-Id");
+        if (sessionId == null || sessionId.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         try {
-            HttpServletRequest request = (HttpServletRequest) req;
-            HttpServletResponse response = (HttpServletResponse) res;
-
-            String encryptedQuery = request.getHeader("X-Sm2-Query");
-            if (encryptedQuery == null || encryptedQuery.isEmpty()) {
-                chain.doFilter(request, response);
-                return;
-            }
-
-            String sessionId = request.getHeader("X-Session-Id");
-            if (sessionId == null || sessionId.isEmpty()) {
-                chain.doFilter(request, response);
-                return;
-            }
-
             Session session = sessionManager.getSession(sessionId);
             if (session == null) {
                 chain.doFilter(request, response);
@@ -53,6 +53,7 @@ public class Sm2QueryDecryptFilter implements Filter {
             }
 
             String plainJson = sessionManager.decryptBody(sessionId, encryptedQuery);
+            @SuppressWarnings("unchecked")
             Map<String, Object> paramsMap = objectMapper.readValue(plainJson, Map.class);
             Map<String, String> params = new LinkedHashMap<>();
             for (Map.Entry<String, Object> e : paramsMap.entrySet()) {
@@ -66,7 +67,7 @@ public class Sm2QueryDecryptFilter implements Filter {
 
         } catch (Exception e) {
             log.error("解密 GET 查询参数失败: {}", e.getMessage());
-            try { chain.doFilter(req, res); } catch (Exception ignored) {}
+            chain.doFilter(request, response);
         }
     }
 }

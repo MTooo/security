@@ -6,7 +6,7 @@
 
     <groupId>com.sm2sdk</groupId>
     <artifactId>sm2-sdk-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>SM2 Security Data Exchange SDK</name>
@@ -26,7 +26,8 @@
 
         <!-- Java 版本（core/client 编译为 JDK 8 字节码，starter 按需覆盖） -->
         <maven.compiler.release>8</maven.compiler.release>
-
+        <!-- 版本信息-->
+        <revision>1.0.0</revision>
         <!-- 核心依赖 -->
         <hutool.version>5.8.46</hutool.version>
         <jackson.version>2.15.4</jackson.version>

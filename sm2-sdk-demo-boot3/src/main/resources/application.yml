@@ -4,25 +4,19 @@ spring:
       host: 10.139.1.128
       port: 6379
       password: Ysgz@1234
-
 # SM2 SDK Demo — Spring Boot 3.2
 sm2:
   sdk:
-    # 测试用密钥对（由 Sm2KeyGen 生成）
-    sm2-private-key: "3f5731fe1b6468d29b016069e2bf60630e03bcab651aa701cac39bd2e48970f0"
-    sm2-public-key: "04182d88d7d8bbfb3510e14fa1f22d5df8c2f3399d66cb9924d21543c3e2199424c605f3dbeaea2f4f8902a0de3d5eb331481a45c26eccc7c231a4b8bfa1c6228b"
-    # 指向自身，演示客户端→服务端闭环
-    server-url: "http://localhost:8080"
+    sm2-private-key: "ba5f36197c0db7b9138be532dd097a728816694f8c047a9065b657287e59f8df"
+    sm2-public-key: "04dd0815d3cfb7d68912a03f786412cc409c5de066fd9733c413f77a98eba0c69dce3c755195e07ef2567b4d5e9ded310e3885605f07ae13341b1d3e32ec0d6efc"
+    server-id: gzbd-sfrz        # 别人调我时，我的身份
+    client-id: gzbd-sfrz            # 我调别人时，报上自己的身份
     redis-session-store: true
-    clientId: app-a
-    client-access:
-      enabled: true           # 启用访问控制，默认 false（向后兼容）
-      default-policy: deny    # 无规则匹配时的默认策略：allow（默认）或 deny
-      rules:
-        - client-id: "app-a"
-          paths:
-            - /api/user/**
-            - /api/order/**
-        - client-id: "default"
-          paths:
-            - "/**"           # app-b 可访问一切
+
+    peers:
+      # 对端 A
+      - public-key: "04d8eeafe6fc044e0c256eaa2f929bdd8698bc9c2d12c652d967513e86a20c5146128cd5363af310a2295a2526f5f7fd5cd2a6d4c1c25ef746ed18605c4d03a305"
+        server-url: "http://localhost:8333"
+        server-id: security-third         # 对端 A 声称的 server-id
+server:
+  port: 8080

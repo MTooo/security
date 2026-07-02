@@ -68,7 +68,6 @@ public class Sm2SdkProperties {
     private boolean redisSessionStore;
 
     /** 对端配置列表 */
-    @NestedConfigurationProperty
     private List<PeerProperties> peers = new ArrayList<>();
 
     /** 客户端访问控制配置 */

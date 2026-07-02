@@ -73,8 +73,9 @@ public class Sm2HandshakeController {
         Sm2KeyExchange keyExchange = sessionManager.getKeyExchange();
         byte[] serverPrivKey = SessionManager.hexToBytes(
                 config.getSdkConfig().getSm2PrivateKey());
-        byte[] clientPubKey = SessionManager.hexToBytes(
-                config.getSdkConfig().getSm2PublicKey());
+        // 从 peers 配置查找客户端公钥，匹配规则：peers 中 serverId 与客户端 clientId 一致
+        String clientPubKeyHex = findClientPublicKey(init.getClientId());
+        byte[] clientPubKey = SessionManager.hexToBytes(clientPubKeyHex);
 
         try {
             // 步骤 1: 服务端处理客户端初始化请求
@@ -157,6 +158,28 @@ public class Sm2HandshakeController {
             return ((HutoolSm2KeyExchange) keyExchange).getCurrentConfirmationValue();
         }
         return null;
+    }
+
+    /**
+     * 从 peers 配置查找客户端的 SM2 公钥。
+     *
+     * <p>匹配规则：peers 列表项中 {@code serverId} 与握手请求中的客户端标识一致。
+     * 未匹配时回退到服务端自身公钥，保持单机闭环测试的向后兼容。
+     *
+     * @param clientId 客户端标识
+     * @return 客户端公钥（十六进制字符串）
+     */
+    private String findClientPublicKey(String clientId) {
+        if (config.getSdkConfig().getPeerConfigs() != null) {
+            for (com.sm2sdk.core.model.Sm2SdkConfig.PeerConfig peer
+                    : config.getSdkConfig().getPeerConfigs()) {
+                if (clientId.equals(peer.getServerId())) {
+                    return peer.getPublicKey();
+                }
+            }
+        }
+        // 未匹配时回退到服务端自己的公钥（向后兼容：自测/闭环场景）
+        return config.getSdkConfig().getSm2PublicKey();
     }
 
     /**

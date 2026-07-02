@@ -31,9 +31,10 @@
         <dependency>
             <groupId>com.sm2sdk</groupId>
             <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
         </dependency>
-
         <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

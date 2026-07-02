@@ -37,25 +37,25 @@ public class Sm2QueryDecryptFilter implements Filter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws java.io.IOException, javax.servlet.ServletException {
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+
+        String encryptedQuery = request.getHeader(HEADER_SM2_QUERY);
+        if (encryptedQuery == null || encryptedQuery.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String sessionId = request.getHeader("X-Session-Id");
+        if (sessionId == null || sessionId.isEmpty()) {
+            log.debug("X-Sm2-Query 存在但无 X-Session-Id，跳过参数解密");
+            chain.doFilter(request, response);
+            return;
+        }
+
         try {
-            HttpServletRequest request = (HttpServletRequest) req;
-            HttpServletResponse response = (HttpServletResponse) res;
-
-            String encryptedQuery = request.getHeader(HEADER_SM2_QUERY);
-            if (encryptedQuery == null || encryptedQuery.isEmpty()) {
-                chain.doFilter(request, response);
-                return;
-            }
-
-            String sessionId = request.getHeader("X-Session-Id");
-            if (sessionId == null || sessionId.isEmpty()) {
-                log.debug("X-Sm2-Query 存在但无 X-Session-Id，跳过参数解密");
-                chain.doFilter(request, response);
-                return;
-            }
-
             Session session = sessionManager.getSession(sessionId);
             if (session == null) {
                 log.debug("会话不存在，跳过参数解密");
@@ -64,6 +64,7 @@ public class Sm2QueryDecryptFilter implements Filter {
             }
 
             String plainJson = sessionManager.decryptBody(sessionId, encryptedQuery);
+            @SuppressWarnings("unchecked")
             Map<String, Object> paramsMap = objectMapper.readValue(plainJson, Map.class);
             Map<String, String> params = new LinkedHashMap<>();
             for (Map.Entry<String, Object> e : paramsMap.entrySet()) {
@@ -77,11 +78,7 @@ public class Sm2QueryDecryptFilter implements Filter {
 
         } catch (Exception e) {
             log.error("解密 GET 查询参数失败: {}", e.getMessage());
-            try {
-                chain.doFilter(req, res);
-            } catch (Exception ex) {
-                log.error("Filter chain 异常", ex);
-            }
+            chain.doFilter(request, response);
         }
     }
 }
