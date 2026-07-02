@@ -170,7 +170,9 @@ public class Sm2SdkAutoConfiguration {
     public Sm2HttpClient sm2HttpClient(Sm2SdkConfig config,
                                        SessionManager sessionManager) {
         return new Sm2HttpClient(config, sessionManager,
-                config.getServerUrl() != null ? "default" : "peer");
+                config.getClientId() != null && !config.getClientId().isEmpty()
+                        ? config.getClientId()
+                        : config.getServerUrl() != null ? "default" : "peer");
     }
 
     @Bean

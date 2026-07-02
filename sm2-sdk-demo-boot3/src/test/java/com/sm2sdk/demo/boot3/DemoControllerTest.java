@@ -18,12 +18,11 @@ class DemoControllerTest {
 
     @Test
     void testEcho() {
-        Map<String,String> body = new HashMap<>();
-        body.put("name","张三");
-        Object execute = sm2HttpClient.post("/api/echo")
-                .body(body)
+        Object execute1 = sm2HttpClient.get("/api/user/query")
+                .param("name", "1")
+                .param("page", "1")
                 .execute(Object.class);
-        System.out.println(execute);
+        System.out.println(execute1);
     }
 
 }

@@ -15,6 +15,7 @@ public class Sm2ClientConfig {
 
     private final String serverUrl;
     private final String peerId;
+    private final String serverId;
     private final String sm2PrivateKey;
     private final String sm2PublicKey;
     private final Sm2SdkConfig.PeerConfig peerConfig;
@@ -30,9 +31,14 @@ public class Sm2ClientConfig {
         Objects.requireNonNull(peerId, "peerId must not be null");
         this.serverUrl = config.getServerUrl();
         this.peerId = peerId;
+        this.peerConfig = findPeerConfig(config, peerId);
+        // 优先使用 PeerConfig 中的 serverId，否则默认 "default"
+        // 注意：不使用全局 serverId，因为那是"自己作为服务端"的标识
+        String peerServerId = (peerConfig != null && peerConfig.getServerId() != null)
+                ? peerConfig.getServerId() : null;
+        this.serverId = peerServerId != null ? peerServerId : "default";
         this.sm2PrivateKey = config.getSm2PrivateKey();
         this.sm2PublicKey = config.getSm2PublicKey();
-        this.peerConfig = findPeerConfig(config, peerId);
     }
 
     /**
@@ -45,12 +51,21 @@ public class Sm2ClientConfig {
     }
 
     /**
-     * 获取对端标识。
+     * 获取对端标识（即客户端自身标识）。
      *
      * @return 对端标识
      */
     public String getPeerId() {
         return peerId;
+    }
+
+    /**
+     * 获取服务端标识，用于 SM2 握手 ZB 计算。
+     *
+     * @return 服务端标识，默认 "default"
+     */
+    public String getServerId() {
+        return serverId;
     }
 
     /**

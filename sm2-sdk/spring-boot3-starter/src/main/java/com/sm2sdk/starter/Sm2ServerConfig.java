@@ -39,7 +39,8 @@ public class Sm2ServerConfig {
      */
     public Sm2ServerConfig(Sm2SdkConfig sdkConfig) {
         this(sdkConfig, DEFAULT_HANDSHAKE_INIT_PATH, DEFAULT_HANDSHAKE_CONFIRM_PATH,
-                DEFAULT_NONCE_VALIDATION_ENABLED, DEFAULT_SERVER_ID);
+                DEFAULT_NONCE_VALIDATION_ENABLED,
+                sdkConfig.getServerId() != null ? sdkConfig.getServerId() : DEFAULT_SERVER_ID);
     }
 
     /**

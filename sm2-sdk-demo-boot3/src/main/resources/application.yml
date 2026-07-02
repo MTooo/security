@@ -1,3 +1,10 @@
+spring:
+  data:
+    redis:
+      host: 10.139.1.128
+      port: 6379
+      password: Ysgz@1234
+
 # SM2 SDK Demo — Spring Boot 3.2
 sm2:
   sdk:
@@ -6,3 +13,16 @@ sm2:
     sm2-public-key: "04182d88d7d8bbfb3510e14fa1f22d5df8c2f3399d66cb9924d21543c3e2199424c605f3dbeaea2f4f8902a0de3d5eb331481a45c26eccc7c231a4b8bfa1c6228b"
     # 指向自身，演示客户端→服务端闭环
     server-url: "http://localhost:8080"
+    redis-session-store: true
+    clientId: app-a
+    client-access:
+      enabled: true           # 启用访问控制，默认 false（向后兼容）
+      default-policy: deny    # 无规则匹配时的默认策略：allow（默认）或 deny
+      rules:
+        - client-id: "app-a"
+          paths:
+            - /api/user/**
+            - /api/order/**
+        - client-id: "default"
+          paths:
+            - "/**"           # app-b 可访问一切

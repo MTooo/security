@@ -45,6 +45,8 @@ public class Sm2SdkConfig {
     private String sm2PrivateKey;
     private String sm2PublicKey;
     private String serverUrl;
+    private String clientId;
+    private String serverId = "default";
     private long handshakeTimeoutMs = DEFAULT_HANDSHAKE_TIMEOUT_MS;
     private long sessionTimeoutMs = DEFAULT_SESSION_TIMEOUT_MS;
     private long maxSessionLifetimeMs = DEFAULT_MAX_SESSION_LIFETIME_MS;
@@ -53,6 +55,7 @@ public class Sm2SdkConfig {
     private long sessionCleanupIntervalMs = DEFAULT_SESSION_CLEANUP_INTERVAL_MS;
     private String redisKeyPrefix = DEFAULT_REDIS_KEY_PREFIX;
     private String localSecretKey;
+    private boolean redisSessionStore = false;
     private List<PeerConfig> peerConfigs = new ArrayList<>();
     private ClientAccessConfig clientAccessConfig;
 
@@ -85,6 +88,13 @@ public class Sm2SdkConfig {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
+
+    /** 获取服务端标识，用于 SM2 握手 ZB 计算。默认 "default"。 */
+    public String getServerId() { return serverId; }
+    public void setServerId(String serverId) { this.serverId = serverId; }
 
     public long getHandshakeTimeoutMs() {
         return handshakeTimeoutMs;
@@ -173,6 +183,24 @@ public class Sm2SdkConfig {
         this.localSecretKey = localSecretKey;
     }
 
+    /**
+     * 是否启用 Redis 会话存储。
+     *
+     * @return true 表示使用 Redis 存储会话
+     */
+    public boolean isRedisSessionStore() {
+        return redisSessionStore;
+    }
+
+    /**
+     * 设置是否启用 Redis 会话存储。
+     *
+     * @param redisSessionStore true 启用 Redis 存储
+     */
+    public void setRedisSessionStore(boolean redisSessionStore) {
+        this.redisSessionStore = redisSessionStore;
+    }
+
     public List<PeerConfig> getPeerConfigs() {
         return peerConfigs;
     }
@@ -203,6 +231,16 @@ public class Sm2SdkConfig {
 
     public Sm2SdkConfig withServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+        return this;
+    }
+
+    public Sm2SdkConfig withClientId(String clientId) {
+        this.clientId = clientId;
+        return this;
+    }
+
+    public Sm2SdkConfig withServerId(String serverId) {
+        this.serverId = serverId;
         return this;
     }
 
@@ -255,6 +293,17 @@ public class Sm2SdkConfig {
      */
     public Sm2SdkConfig withLocalSecretKey(String localSecretKey) {
         this.localSecretKey = localSecretKey;
+        return this;
+    }
+
+    /**
+     * 设置 Redis 会话存储开关并返回当前配置实例。
+     *
+     * @param redisSessionStore true 启用 Redis 存储
+     * @return 当前配置实例
+     */
+    public Sm2SdkConfig withRedisSessionStore(boolean redisSessionStore) {
+        this.redisSessionStore = redisSessionStore;
         return this;
     }
 
@@ -367,6 +416,7 @@ public class Sm2SdkConfig {
 
         private String publicKey;
         private String serverUrl;
+        private String serverId;
 
         public PeerConfig() {
         }
@@ -374,6 +424,12 @@ public class Sm2SdkConfig {
         public PeerConfig(String publicKey, String serverUrl) {
             this.publicKey = publicKey;
             this.serverUrl = serverUrl;
+        }
+
+        public PeerConfig(String publicKey, String serverUrl, String serverId) {
+            this.publicKey = publicKey;
+            this.serverUrl = serverUrl;
+            this.serverId = serverId;
         }
 
         public String getPublicKey() {
@@ -392,6 +448,9 @@ public class Sm2SdkConfig {
             this.serverUrl = serverUrl;
         }
 
+        public String getServerId() { return serverId; }
+        public void setServerId(String serverId) { this.serverId = serverId; }
+
         // Fluent setters
 
         public PeerConfig withPublicKey(String publicKey) {
@@ -404,24 +463,31 @@ public class Sm2SdkConfig {
             return this;
         }
 
+        public PeerConfig withServerId(String serverId) {
+            this.serverId = serverId;
+            return this;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PeerConfig that = (PeerConfig) o;
             return Objects.equals(publicKey, that.publicKey)
-                    && Objects.equals(serverUrl, that.serverUrl);
+                    && Objects.equals(serverUrl, that.serverUrl)
+                    && Objects.equals(serverId, that.serverId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(publicKey, serverUrl);
+            return Objects.hash(publicKey, serverUrl, serverId);
         }
 
         @Override
         public String toString() {
             return "PeerConfig{" +
                     "serverUrl='" + serverUrl + '\'' +
+                    ", serverId='" + serverId + '\'' +
                     '}';
         }
     }

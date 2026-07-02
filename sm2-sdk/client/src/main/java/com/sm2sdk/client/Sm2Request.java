@@ -339,7 +339,7 @@ public class Sm2Request {
             // 步骤 2: 处理服务端响应，派生共享密钥
             Sm2KeyExchange.HandshakeResult result = keyExchange.processServerResponse(
                     init, serverResp, clientPrivKey, serverPubKey,
-                    peerId, peerId);
+                    peerId, config.getServerId());
 
             // 步骤 3: 构建确认消息并发送
             HandshakeConfirm confirm = keyExchange.buildConfirm(result);

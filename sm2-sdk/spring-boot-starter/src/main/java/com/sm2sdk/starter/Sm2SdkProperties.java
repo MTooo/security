@@ -34,6 +34,12 @@ public class Sm2SdkProperties {
     /** 服务端 URL */
     private String serverUrl;
 
+    /** 客户端标识，在握手时发送给服务端，用于服务端访问控制 */
+    private String clientId;
+
+    /** 服务端标识，握手 ZB 计算时使用，默认 "default" */
+    private String serverId;
+
     /** 握手超时时间（毫秒），默认 10000 */
     private long handshakeTimeoutMs = Sm2SdkConfig.DEFAULT_HANDSHAKE_TIMEOUT_MS;
 
@@ -57,6 +63,9 @@ public class Sm2SdkProperties {
 
     /** 本地加密密钥（Base64 编码的 AES 密钥），用于保护 Redis 中的 SM4 密钥 */
     private String localSecretKey;
+
+    /** 是否启用 Redis 会话存储 */
+    private boolean redisSessionStore;
 
     /** 对端配置列表 */
     @NestedConfigurationProperty
@@ -91,6 +100,12 @@ public class Sm2SdkProperties {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
+
+    public String getServerId() { return serverId; }
+    public void setServerId(String serverId) { this.serverId = serverId; }
 
     public long getHandshakeTimeoutMs() {
         return handshakeTimeoutMs;
@@ -156,6 +171,9 @@ public class Sm2SdkProperties {
         this.localSecretKey = localSecretKey;
     }
 
+    public boolean isRedisSessionStore() { return redisSessionStore; }
+    public void setRedisSessionStore(boolean redisSessionStore) { this.redisSessionStore = redisSessionStore; }
+
     public List<PeerProperties> getPeers() {
         return peers;
     }
@@ -184,6 +202,8 @@ public class Sm2SdkProperties {
         config.setSm2PrivateKey(sm2PrivateKey);
         config.setSm2PublicKey(sm2PublicKey);
         config.setServerUrl(serverUrl);
+        config.setClientId(clientId);
+        config.setServerId(serverId != null ? serverId : "default");
         config.setHandshakeTimeoutMs(handshakeTimeoutMs);
         config.setSessionTimeoutMs(sessionTimeoutMs);
         config.setMaxSessionLifetimeMs(maxSessionLifetimeMs);
@@ -192,13 +212,14 @@ public class Sm2SdkProperties {
         config.setSessionCleanupIntervalMs(sessionCleanupIntervalMs);
         config.setRedisKeyPrefix(redisKeyPrefix);
         config.setLocalSecretKey(localSecretKey);
+        config.setRedisSessionStore(redisSessionStore);
 
         // 转换对端配置列表
         if (peers != null) {
             List<Sm2SdkConfig.PeerConfig> peerConfigs = new ArrayList<>();
             for (PeerProperties p : peers) {
                 peerConfigs.add(new Sm2SdkConfig.PeerConfig(
-                        p.getPublicKey(), p.getServerUrl()));
+                        p.getPublicKey(), p.getServerUrl(), p.getServerId()));
             }
             config.setPeerConfigs(peerConfigs);
         }
@@ -242,6 +263,9 @@ public class Sm2SdkProperties {
         /** 对端服务端 URL */
         private String serverUrl;
 
+        /** 对端服务端标识，握手 ZB 计算时使用 */
+        private String serverId;
+
         public String getPublicKey() {
             return publicKey;
         }
@@ -257,6 +281,9 @@ public class Sm2SdkProperties {
         public void setServerUrl(String serverUrl) {
             this.serverUrl = serverUrl;
         }
+
+        public String getServerId() { return serverId; }
+        public void setServerId(String serverId) { this.serverId = serverId; }
     }
 
     /**
