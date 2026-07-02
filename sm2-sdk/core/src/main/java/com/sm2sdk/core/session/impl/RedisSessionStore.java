@@ -8,9 +8,11 @@ import com.sm2sdk.core.session.SessionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import org.bouncycastle.crypto.engines.SM4Engine;
+import org.bouncycastle.crypto.modes.GCMBlockCipher;
+import org.bouncycastle.crypto.params.AEADParameters;
+import org.bouncycastle.crypto.params.KeyParameter;
+
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -22,7 +24,7 @@ import java.util.Base64;
  *
  * <p>将会话序列化为 JSON 后存储到 Redis，并设置与 {@link Sm2SdkConfig#getSessionTimeoutMs()}
  * 同步的 TTL（过期时间）。{@link Session Session} 的 SM4 密钥在序列化前使用本地加密密钥
- * （由 {@link Sm2SdkConfig#getLocalSecretKey()} 配置）进行 AES-128-GCM 加密保护，
+ * （由 {@link Sm2SdkConfig#getLocalSecretKey()} 配置）进行 SM4-GCM 加密保护，
  * 确保即使 Redis 数据泄露，SM4 密钥材料也不被直接暴露。
  *
  * <p>Key 格式：<code>{prefix}:session:{sessionId}</code>，其中 prefix 通过
@@ -42,14 +44,14 @@ public class RedisSessionStore implements SessionStore {
     /** Redis key 模板：{prefix}:session:{sessionId} */
     private static final String KEY_TEMPLATE = "%s:session:%s";
 
-    /** AES-GCM 加密算法标识 */
-    private static final String AES_GCM_ALGORITHM = "AES/GCM/NoPadding";
-
     /** GCM 认证标签长度（位） */
     private static final int GCM_TAG_LENGTH = 128;
 
     /** GCM IV 长度（字节） */
     private static final int GCM_IV_LENGTH = 12;
+
+    /** GCM 认证标签长度（字节） */
+    private static final int GCM_TAG_LEN_BYTES = 16;
 
     private final String keyPrefix;
     private final RedisOperations redisOps;
@@ -111,8 +113,8 @@ public class RedisSessionStore implements SessionStore {
         String localSecretKeyStr = config.getLocalSecretKey();
         if (localSecretKeyStr != null && !localSecretKeyStr.isEmpty()) {
             byte[] decoded = Base64.getDecoder().decode(localSecretKeyStr);
-            this.encryptionKey = deriveAesKey(decoded);
-            log.info("本地加密密钥已配置，SM4 密钥将使用 AES-128-GCM 加密后存储");
+            this.encryptionKey = deriveSm4Key(decoded);
+            log.info("本地加密密钥已配置，SM4 密钥将使用 SM4-GCM 加密后存储");
         } else {
             this.encryptionKey = null;
             log.warn("localSecretKey 未配置，sm4Key 将以 Base64 编码（非加密）形式存储在 Redis 中。"
@@ -281,7 +283,7 @@ public class RedisSessionStore implements SessionStore {
     /**
      * 加密 SM4 密钥。
      *
-     * <p>使用 AES-128-GCM 加密 SM4 密钥。若未配置本地加密密钥，则只进行 Base64 编码。
+     * <p>使用 SM4-GCM 加密 SM4 密钥。若未配置本地加密密钥，则只进行 Base64 编码。
      *
      * @param session 会话对象
      * @return Base64 编码的加密数据
@@ -294,22 +296,24 @@ public class RedisSessionStore implements SessionStore {
                 return Base64.getEncoder().encodeToString(keyBytes);
             }
 
-            // AES-128-GCM 加密
-            Cipher cipher = Cipher.getInstance(AES_GCM_ALGORITHM);
+            // SM4-GCM 加密
+            GCMBlockCipher cipher = new GCMBlockCipher(new SM4Engine());
             byte[] iv = new byte[GCM_IV_LENGTH];
             secureRandom.nextBytes(iv);
-            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey, "AES");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec);
-            byte[] ciphertext = cipher.doFinal(keyBytes);
+            AEADParameters params = new AEADParameters(
+                    new KeyParameter(encryptionKey), GCM_TAG_LENGTH, iv, null);
+            cipher.init(true, params);
+            byte[] output = new byte[cipher.getOutputSize(keyBytes.length)];
+            int len = cipher.processBytes(keyBytes, 0, keyBytes.length, output, 0);
+            cipher.doFinal(output, len);
 
-            // 格式：IV（12字节） + 密文
-            ByteBuffer buffer = ByteBuffer.allocate(iv.length + ciphertext.length);
+            // 格式：IV（12字节） + 密文 + TAG（16字节）
+            ByteBuffer buffer = ByteBuffer.allocate(iv.length + output.length);
             buffer.put(iv);
-            buffer.put(ciphertext);
+            buffer.put(output);
             return Base64.getEncoder().encodeToString(buffer.array());
         } catch (Exception e) {
-            log.error("sm4Key 加密失败，使用 Base64 编码降级", e);
+            log.error("sm4Key SM4-GCM 加密失败，使用 Base64 编码降级", e);
             return Base64.getEncoder().encodeToString(keyBytes);
         } finally {
             Session.clearKeyCopy(keyBytes);
@@ -318,6 +322,8 @@ public class RedisSessionStore implements SessionStore {
 
     /**
      * 解密 SM4 密钥。
+     *
+     * <p>使用 SM4-GCM 解密。若未配置本地加密密钥，则只进行 Base64 解码。
      *
      * @param encrypted Base64 编码的加密数据
      * @return 解密后的 SM4 密钥字节数组
@@ -331,32 +337,35 @@ public class RedisSessionStore implements SessionStore {
                 return decoded;
             }
 
-            // 格式：IV（12字节） + 密文
+            // 格式：IV（12字节） + 密文 + TAG（16字节）
             ByteBuffer buffer = ByteBuffer.wrap(decoded);
             byte[] iv = new byte[GCM_IV_LENGTH];
             buffer.get(iv);
             byte[] ciphertext = new byte[buffer.remaining()];
             buffer.get(ciphertext);
 
-            Cipher cipher = Cipher.getInstance(AES_GCM_ALGORITHM);
-            GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey, "AES");
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
-            return cipher.doFinal(ciphertext);
+            GCMBlockCipher cipher = new GCMBlockCipher(new SM4Engine());
+            AEADParameters params = new AEADParameters(
+                    new KeyParameter(encryptionKey), GCM_TAG_LENGTH, iv, null);
+            cipher.init(false, params);
+            byte[] output = new byte[cipher.getOutputSize(ciphertext.length)];
+            int len = cipher.processBytes(ciphertext, 0, ciphertext.length, output, 0);
+            cipher.doFinal(output, len);
+            return output;
         } catch (Exception e) {
-            throw new RuntimeException("sm4Key 解密失败", e);
+            throw new RuntimeException("sm4Key SM4-GCM 解密失败", e);
         }
     }
 
     /**
-     * 从输入密钥材料派生 AES-128 密钥。
+     * 从输入密钥材料派生 SM4 密钥。
      *
-     * <p>使用 SHA-256 对输入取哈希后取前 16 字节作为 AES 密钥。
+     * <p>使用 SHA-256 对输入取哈希后取前 16 字节作为 SM4 密钥。
      *
      * @param input 输入密钥材料
-     * @return 16 字节的 AES 密钥
+     * @return 16 字节的 SM4 密钥
      */
-    private static byte[] deriveAesKey(byte[] input) {
+    private static byte[] deriveSm4Key(byte[] input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(input);
@@ -364,7 +373,7 @@ public class RedisSessionStore implements SessionStore {
             System.arraycopy(hash, 0, key, 0, 16);
             return key;
         } catch (Exception e) {
-            throw new RuntimeException("无法派生 AES 密钥", e);
+            throw new RuntimeException("无法派生 SM4 密钥", e);
         }
     }
 

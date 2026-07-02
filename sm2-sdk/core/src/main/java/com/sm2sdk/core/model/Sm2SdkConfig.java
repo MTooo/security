@@ -163,9 +163,9 @@ public class Sm2SdkConfig {
     }
 
     /**
-     * 获取本地加密密钥（Base64 编码的 AES 密钥）。
+     * 获取本地加密密钥（Base64 编码的 SM4 密钥材料）。
      *
-     * <p>用于加密保护存储在 Redis 中的会话 SM4 密钥。若未配置，SM4 密钥将以
+     * <p>用于 SM4-GCM 加密保护存储在 Redis 中的会话 SM4 密钥。若未配置，SM4 密钥将以
      * Base64 编码（非加密）形式存储。
      *
      * @return 本地加密密钥（Base64 编码），可能为 null
@@ -175,7 +175,7 @@ public class Sm2SdkConfig {
     }
 
     /**
-     * 设置本地加密密钥（Base64 编码的 AES 密钥）。
+     * 设置本地加密密钥（Base64 编码的 SM4 密钥材料）。
      *
      * @param localSecretKey 本地加密密钥（Base64 编码）
      */
@@ -288,7 +288,7 @@ public class Sm2SdkConfig {
     /**
      * 设置本地加密密钥并返回当前配置实例。
      *
-     * @param localSecretKey 本地加密密钥（Base64 编码的 AES 密钥）
+     * @param localSecretKey 本地加密密钥（Base64 编码的 SM4 密钥材料）
      * @return 当前配置实例
      */
     public Sm2SdkConfig withLocalSecretKey(String localSecretKey) {

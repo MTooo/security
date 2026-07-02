@@ -61,7 +61,7 @@ public class Sm2SdkProperties {
     /** Redis 键名前缀，默认 "sm2" */
     private String redisKeyPrefix = Sm2SdkConfig.DEFAULT_REDIS_KEY_PREFIX;
 
-    /** 本地加密密钥（Base64 编码的 AES 密钥），用于保护 Redis 中的 SM4 密钥 */
+    /** 本地加密密钥（Base64 编码的 SM4 密钥材料），用于 SM4-GCM 加密保护 Redis 中的 SM4 密钥 */
     private String localSecretKey;
 
     /** 是否启用 Redis 会话存储 */

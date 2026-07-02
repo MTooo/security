@@ -1,9 +1,10 @@
 spring:
   data:
     redis:
-      host: 10.139.1.128
-      port: 6379
+      host: 10.128.81.3
+      port: 36378
       password: Ysgz@1234
+
 # SM2 SDK Demo — Spring Boot 3.2
 sm2:
   sdk:
@@ -12,11 +13,12 @@ sm2:
     server-id: gzbd-sfrz        # 别人调我时，我的身份
     client-id: gzbd-sfrz            # 我调别人时，报上自己的身份
     redis-session-store: true
-
+    redis-key-prefix: sm2-server
     peers:
       # 对端 A
       - public-key: "04d8eeafe6fc044e0c256eaa2f929bdd8698bc9c2d12c652d967513e86a20c5146128cd5363af310a2295a2526f5f7fd5cd2a6d4c1c25ef746ed18605c4d03a305"
         server-url: "http://localhost:8333"
         server-id: security-third         # 对端 A 声称的 server-id
+    local-secret-key: "fnSsH8cyoBIhclWXtDScZw=="
 server:
   port: 8080

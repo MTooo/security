@@ -14,7 +14,9 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 /**
- * SM2 密钥对生成工具。
+ * SM2 密钥对 + SM4 密钥生成工具。
+ *
+ * <p>每次生成一对 SM2 公私钥和一个随机 SM4 密钥（128 位），输出格式可直接填入 application.yml。
  *
  * <p>使用分发的 JAR 直接运行：
  * <pre>{@code
@@ -29,10 +31,19 @@ import java.security.SecureRandom;
  * <pre>{@code
  *   mvn exec:java -pl core -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" -Dexec.args="2"
  * }</pre>
+ *
+ * <p>SM4 密钥用途：
+ * <ul>
+ *   <li>作为 {@code sm2.sdk.local-secret-key} 加密保护 Redis 中的 SM4 会话密钥（需 Base64 编码）</li>
+ *   <li>或直接用于自定义 SM4 加解密场景</li>
+ * </ul>
  */
 public class Sm2KeyGen {
 
     private static final X9ECParameters CURVE = GMNamedCurves.getByName("sm2p256v1");
+
+    /** SM4 密钥长度（字节） */
+    private static final int SM4_KEY_LEN = 16;
 
     public static void main(String[] args) {
         int count = 1;
@@ -50,6 +61,7 @@ public class Sm2KeyGen {
         SecureRandom random = new SecureRandom();
 
         for (int i = 1; i <= count; i++) {
+            // —— SM2 密钥对 ——
             ECKeyPairGenerator gen = new ECKeyPairGenerator();
             gen.init(new ECKeyGenerationParameters(domain, random));
             AsymmetricCipherKeyPair pair = gen.generateKeyPair();
@@ -62,11 +74,19 @@ public class Sm2KeyGen {
             byte[] y = bigIntToFixedBytes(
                     pub.getQ().getAffineYCoord().toBigInteger(), 32);
 
+            // —— SM4 密钥（128 位随机数） ——
+            byte[] sm4Key = new byte[SM4_KEY_LEN];
+            random.nextBytes(sm4Key);
+            String sm4KeyHex = Hex.toHexString(sm4Key);
+            String sm4KeyBase64 = java.util.Base64.getEncoder().encodeToString(sm4Key);
+
             if (count > 1) {
-                System.out.println("===== 密钥对 #" + i + " =====");
+                System.out.println("===== 密钥组 #" + i + " =====");
             }
             System.out.println("sm2-private-key: " + Hex.toHexString(priv));
             System.out.println("sm2-public-key:  " + "04" + Hex.toHexString(x) + Hex.toHexString(y));
+            System.out.println("sm4-key:         " + sm4KeyHex + "  (hex, 可用作 local-secret-key)");
+            System.out.println("sm4-key-base64:  " + sm4KeyBase64 + "  (base64, 可直接填入 local-secret-key)");
             System.out.println();
         }
     }
