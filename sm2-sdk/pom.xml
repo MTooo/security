@@ -6,12 +6,12 @@
 
     <groupId>com.sm2sdk</groupId>
     <artifactId>sm2-sdk-parent</artifactId>
-    <version>${revision}</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <name>SM2 Security Data Exchange SDK</name>
     <description>SM2 安全数据交换 SDK — 加解密、签名验签、会话管理、HTTP 客户端、Spring Boot 自动配置</description>
-    <url>https://github.com/sm2sdk/sm2-sdk</url>
+    <url>https://xxx.com/sm2sdk/sm2-sdk</url>
 
     <modules>
         <module>core</module>
@@ -30,15 +30,19 @@
         <revision>1.0.0</revision>
         <!-- 核心依赖 -->
         <hutool.version>5.8.46</hutool.version>
-        <jackson.version>2.15.4</jackson.version>
-        <caffeine.version>2.9.3</caffeine.version>
-        <slf4j.version>2.0.9</slf4j.version>
+        <jackson.version>2.22.0</jackson.version>
+        <caffeine.version>3.2.4</caffeine.version>
+        <slf4j.version>2.0.18</slf4j.version>
 
-        <!-- Spring（Spring Boot 2.7 / 3.2 均在此管理版本） -->
+        <!-- Spring（Spring Boot 2.7 / 3.4 均在此管理版本） -->
+        <!-- Spring Boot 2.7.18 已 EOL，手动覆盖 spring-framework 和 tomcat 版本修复 CVE -->
         <spring-boot.version>2.7.18</spring-boot.version>
-        <spring-boot3.version>3.2.0</spring-boot3.version>
-        <spring.version>5.3.31</spring.version>
-        <spring3.version>6.1.1</spring3.version>
+        <spring-boot3.version>3.4.5</spring-boot3.version>
+        <spring.version>5.3.39</spring.version>
+        <spring3.version>6.2.5</spring3.version>
+
+        <!-- 覆盖 Spring Boot 2.7.18 内置的 Tomcat 版本，修复 RCE 漏洞 -->
+        <tomcat.version>9.0.107</tomcat.version>
 
         <!-- Servlet API -->
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
@@ -49,12 +53,12 @@
         <mockito.version>5.8.0</mockito.version>
 
         <!-- 插件 -->
-        <proguard.version>7.4.2</proguard.version>
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.3</maven-shade-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
+        <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -114,16 +118,16 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- === Spring Boot 2.7 BOM === -->
+            <!-- === 测试 BOM（必须在 Spring Boot BOM 之前，确保 JUnit 5.10+ 优先） === -->
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
 
-            <!-- === Spring Framework 5.3 BOM === -->
+            <!-- === Spring Framework 5.3 BOM（必须在 Spring Boot BOM 之前，确保 5.3.39 覆盖 Spring Boot 2.7.18 的 5.3.31） === -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
@@ -132,11 +136,11 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- === 测试 === -->
+            <!-- === Spring Boot 2.7 BOM === -->
             <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit.version}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -159,30 +163,6 @@
                     <configuration>
                         <release>${maven.compiler.release}</release>
                         <encoding>${project.build.sourceEncoding}</encoding>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>com.github.wvengen</groupId>
-                    <artifactId>proguard-maven-plugin</artifactId>
-                    <version>${proguard.version}</version>
-                    <executions>
-                        <execution>
-                            <phase>package</phase>
-                            <goals><goal>proguard</goal></goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <proguardVersion>7.4.2</proguardVersion>
-                        <injar>${project.build.finalName}.jar</injar>
-                        <outjar>${project.build.finalName}-obfuscated.jar</outjar>
-                        <obfuscate>true</obfuscate>
-                        <options>
-                            <option>-target 1.8</option>
-                        </options>
-                        <libs>
-                            <lib>${java.home}/jmods</lib>
-                        </libs>
                     </configuration>
                 </plugin>
 

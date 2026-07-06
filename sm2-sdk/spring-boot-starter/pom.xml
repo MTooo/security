@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.sm2sdk</groupId>
         <artifactId>sm2-sdk-parent</artifactId>
-        <version>${revision}</version>
+        <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -16,6 +16,28 @@
 
     <name>SM2 SDK - Starter</name>
     <description>SM2 SDK Spring Boot Starter — 自动配置 &amp; 一站式集成</description>
+
+    <!-- 覆盖 Spring Boot 2.7.18 内置的 Tomcat 9.0.83 → 9.0.107，修复 CVE-2024-50379/56337/24813 RCE -->
+    <!-- 仅在当前模块生效，不影响 Boot 3 starter -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Core SDK -->

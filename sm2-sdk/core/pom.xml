@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.sm2sdk</groupId>
         <artifactId>sm2-sdk-parent</artifactId>
-        <version>${revision}</version>
+        <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -85,25 +85,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <!-- 发布构建：启用 ProGuard 混淆 -->
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.wvengen</groupId>
-                        <artifactId>proguard-maven-plugin</artifactId>
-                        <configuration>
-                            <proguardInclude>${project.basedir}/../proguard.pro</proguardInclude>
-                            <libs>
-                                <lib>${java.home}/jmods</lib>
-                            </libs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

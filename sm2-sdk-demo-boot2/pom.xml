@@ -13,7 +13,7 @@
 
     <groupId>com.sm2sdk</groupId>
     <artifactId>sm2-sdk-demo-boot2</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <name>SM2 SDK Demo — Spring Boot 2.7</name>
     <description>演示如何在 Spring Boot 2.7 + JDK 8 项目中使用 SM2 SDK</description>
