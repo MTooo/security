@@ -17,7 +17,7 @@
     <name>SM2 SDK - Starter</name>
     <description>SM2 SDK Spring Boot Starter — 自动配置 &amp; 一站式集成</description>
 
-    <!-- 覆盖 Spring Boot 2.7.18 内置的 Tomcat 9.0.83 → 9.0.107，修复 CVE-2024-50379/56337/24813 RCE -->
+    <!-- 覆盖 Spring Boot 2.7.18 内置的 Tomcat → 9.0.119，修复 CVE-2025-55754/2026-29145 等 -->
     <!-- 仅在当前模块生效，不影响 Boot 3 starter -->
     <dependencyManagement>
         <dependencies>
