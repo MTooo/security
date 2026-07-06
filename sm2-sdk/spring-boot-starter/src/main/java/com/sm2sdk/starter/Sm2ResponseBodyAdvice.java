@@ -47,7 +47,8 @@ public class Sm2ResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     @Override
     public boolean supports(MethodParameter returnType,
                             Class<? extends HttpMessageConverter<?>> converterType) {
-        return true;
+        // === 安全加固：仅处理 @Sm2Secured 方法，减少不必要的响应拦截 ===
+        return isSm2Secured(returnType);
     }
 
     @Override

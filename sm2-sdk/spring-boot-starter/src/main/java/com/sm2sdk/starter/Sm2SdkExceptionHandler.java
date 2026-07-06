@@ -15,19 +15,27 @@ import java.util.Map;
 /**
  * 全局异常处理器，将所有异常统一转换为结构化的 JSON 错误响应。
  *
- * <p>响应格式：
+ * <p>响应格式（生产模式）：
  * <pre>{@code
  * {
  *   "code": "29002",
- *   "message": "签名校验失败",
- *   "detail": "客户端签名验证失败"
+ *   "message": "签名校验失败"
  * }
  * }</pre>
+ *
+ * <p>生产模式下不暴露 {@code detail} 字段，防止敏感信息泄露。
+ * 仅在 {@code sm2.sdk.include-error-detail=true} 时输出异常详情（仅限调试）。
  */
 @RestControllerAdvice
 public class Sm2SdkExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(Sm2SdkExceptionHandler.class);
+
+    private final Sm2ServerConfig config;
+
+    public Sm2SdkExceptionHandler(Sm2ServerConfig config) {
+        this.config = config;
+    }
 
     /** SDK 业务异常 */
     @ExceptionHandler(Sm2SdkException.class)
@@ -35,14 +43,15 @@ public class Sm2SdkExceptionHandler {
         int httpStatus = ex.getHttpStatus();
         String code = ex.getErrorCode().getCode();
         String errorMsg = ex.getErrorCode().getMessage();
-        String detail = ex.getMessage();
 
-        log.error("SDK 异常: code={}, http={}, detail={}", code, httpStatus, detail);
+        log.error("SDK 异常: code={}, http={}, detail={}", code, httpStatus, ex.getMessage());
 
         Map<String, String> body = new LinkedHashMap<>();
         body.put("code", code);
         body.put("message", errorMsg);
-        body.put("detail", detail);
+        if (config.isIncludeErrorDetail()) {
+            body.put("detail", ex.getMessage());
+        }
 
         return ResponseEntity.status(httpStatus).body(body);
     }
@@ -56,7 +65,6 @@ public class Sm2SdkExceptionHandler {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("code", ErrorCode.CLIENT_INIT_FAILED.getCode());
         body.put("message", "请求体解析失败");
-        body.put("detail", ex.getMessage());
 
         return ResponseEntity.status(400).body(body);
     }
@@ -69,7 +77,6 @@ public class Sm2SdkExceptionHandler {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("code", ErrorCode.UNKNOWN_ERROR.getCode());
         body.put("message", ErrorCode.UNKNOWN_ERROR.getMessage());
-        body.put("detail", ex.getMessage() != null ? ex.getMessage() : "未知错误");
 
         return ResponseEntity.status(500).body(body);
     }

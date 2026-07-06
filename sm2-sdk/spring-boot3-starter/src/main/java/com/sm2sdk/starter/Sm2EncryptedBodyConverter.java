@@ -1,5 +1,7 @@
 package com.sm2sdk.starter;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +41,16 @@ public class Sm2EncryptedBodyConverter implements HttpMessageConverter<Object> {
     private final ObjectMapper objectMapper;
 
     public Sm2EncryptedBodyConverter() {
-        this.objectMapper = new ObjectMapper();
+        // === 安全防护：限制 Jackson 反序列化大小和深度 ===
+        StreamReadConstraints constraints = StreamReadConstraints.builder()
+                .maxStringLength(1_000_000)      // 最大字符串 1MB
+                .maxNumberLength(1_000)          // 最大数字长度（WS-2026-0003 修复）
+                .maxNestingDepth(100)            // 最大嵌套深度
+                .build();
+        JsonFactory factory = JsonFactory.builder()
+                .streamReadConstraints(constraints)
+                .build();
+        this.objectMapper = new ObjectMapper(factory);
     }
 
     @Override

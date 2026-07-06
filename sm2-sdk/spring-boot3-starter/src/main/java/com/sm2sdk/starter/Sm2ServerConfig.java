@@ -24,6 +24,18 @@ public class Sm2ServerConfig {
     /** 默认服务端标识（与客户端 AutoConfiguration 创建的 peerId 保持一致） */
     public static final String DEFAULT_SERVER_ID = "default";
 
+    /** 默认握手速率限制（每秒最大请求数） */
+    public static final int DEFAULT_HANDSHAKE_RATE_LIMIT = 10;
+
+    /** 默认握手时间戳有效窗口（毫秒），30 秒 */
+    public static final long DEFAULT_TIMESTAMP_WINDOW_MS = 30_000L;
+
+    /** 默认最大请求体大小（字节），1 MB */
+    public static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 1_048_576;
+
+    /** 默认是否暴露异常详情到响应，生产环境应设为 false */
+    public static final boolean DEFAULT_INCLUDE_ERROR_DETAIL = false;
+
     // ========== 字段 ==========
 
     private final Sm2SdkConfig sdkConfig;
@@ -31,6 +43,10 @@ public class Sm2ServerConfig {
     private final String handshakeConfirmPath;
     private final boolean nonceValidationEnabled;
     private final String serverId;
+    private final int handshakeRateLimitPerSecond;
+    private final long timestampWindowMs;
+    private final int maxRequestBodySize;
+    private final boolean includeErrorDetail;
 
     /**
      * 从 SDK 全局配置构建服务端配置（使用默认值）。
@@ -40,7 +56,9 @@ public class Sm2ServerConfig {
     public Sm2ServerConfig(Sm2SdkConfig sdkConfig) {
         this(sdkConfig, DEFAULT_HANDSHAKE_INIT_PATH, DEFAULT_HANDSHAKE_CONFIRM_PATH,
                 DEFAULT_NONCE_VALIDATION_ENABLED,
-                sdkConfig.getServerId() != null ? sdkConfig.getServerId() : DEFAULT_SERVER_ID);
+                sdkConfig.getServerId() != null ? sdkConfig.getServerId() : DEFAULT_SERVER_ID,
+                DEFAULT_HANDSHAKE_RATE_LIMIT, DEFAULT_TIMESTAMP_WINDOW_MS,
+                DEFAULT_MAX_REQUEST_BODY_SIZE, DEFAULT_INCLUDE_ERROR_DETAIL);
     }
 
     /**
@@ -56,6 +74,19 @@ public class Sm2ServerConfig {
     public Sm2ServerConfig(Sm2SdkConfig sdkConfig, String handshakeInitPath,
                            String handshakeConfirmPath, boolean nonceValidationEnabled,
                            String serverId) {
+        this(sdkConfig, handshakeInitPath, handshakeConfirmPath, nonceValidationEnabled,
+                serverId, DEFAULT_HANDSHAKE_RATE_LIMIT, DEFAULT_TIMESTAMP_WINDOW_MS,
+                DEFAULT_MAX_REQUEST_BODY_SIZE, DEFAULT_INCLUDE_ERROR_DETAIL);
+    }
+
+    /**
+     * 完整构造服务端配置（含安全参数）。
+     */
+    public Sm2ServerConfig(Sm2SdkConfig sdkConfig, String handshakeInitPath,
+                           String handshakeConfirmPath, boolean nonceValidationEnabled,
+                           String serverId, int handshakeRateLimitPerSecond,
+                           long timestampWindowMs, int maxRequestBodySize,
+                           boolean includeErrorDetail) {
         this.sdkConfig = Objects.requireNonNull(sdkConfig, "sdkConfig must not be null");
         this.handshakeInitPath = handshakeInitPath != null ? handshakeInitPath
                 : DEFAULT_HANDSHAKE_INIT_PATH;
@@ -63,6 +94,13 @@ public class Sm2ServerConfig {
                 : DEFAULT_HANDSHAKE_CONFIRM_PATH;
         this.nonceValidationEnabled = nonceValidationEnabled;
         this.serverId = serverId != null ? serverId : DEFAULT_SERVER_ID;
+        this.handshakeRateLimitPerSecond = handshakeRateLimitPerSecond > 0
+                ? handshakeRateLimitPerSecond : DEFAULT_HANDSHAKE_RATE_LIMIT;
+        this.timestampWindowMs = timestampWindowMs > 0
+                ? timestampWindowMs : DEFAULT_TIMESTAMP_WINDOW_MS;
+        this.maxRequestBodySize = maxRequestBodySize > 0
+                ? maxRequestBodySize : DEFAULT_MAX_REQUEST_BODY_SIZE;
+        this.includeErrorDetail = includeErrorDetail;
     }
 
     // ========== Getters ==========
@@ -88,6 +126,26 @@ public class Sm2ServerConfig {
         return serverId;
     }
 
+    /** 获取握手速率限制（每秒最大请求数）。 */
+    public int getHandshakeRateLimitPerSecond() {
+        return handshakeRateLimitPerSecond;
+    }
+
+    /** 获取握手时间戳有效窗口（毫秒）。 */
+    public long getTimestampWindowMs() {
+        return timestampWindowMs;
+    }
+
+    /** 获取最大请求体大小（字节）。 */
+    public int getMaxRequestBodySize() {
+        return maxRequestBodySize;
+    }
+
+    /** 是否在错误响应中包含异常详情。 */
+    public boolean isIncludeErrorDetail() {
+        return includeErrorDetail;
+    }
+
     @Override
     public String toString() {
         return "Sm2ServerConfig{" +
@@ -95,6 +153,9 @@ public class Sm2ServerConfig {
                 ", handshakeConfirmPath='" + handshakeConfirmPath + '\'' +
                 ", nonceValidationEnabled=" + nonceValidationEnabled +
                 ", serverId='" + serverId + '\'' +
+                ", handshakeRateLimit=" + handshakeRateLimitPerSecond +
+                ", timestampWindowMs=" + timestampWindowMs +
+                ", maxRequestBodySize=" + maxRequestBodySize +
                 '}';
     }
 }

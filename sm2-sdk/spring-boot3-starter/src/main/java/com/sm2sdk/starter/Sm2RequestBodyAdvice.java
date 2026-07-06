@@ -30,6 +30,9 @@ public class Sm2RequestBodyAdvice implements RequestBodyAdvice {
 
     private static final Logger log = LoggerFactory.getLogger(Sm2RequestBodyAdvice.class);
 
+    /** 默认最大请求体大小：1 MB */
+    private static final int MAX_BODY_SIZE = 1_048_576;
+
     private final SessionManager sessionManager;
 
     public Sm2RequestBodyAdvice(SessionManager sessionManager) {
@@ -53,9 +56,14 @@ public class Sm2RequestBodyAdvice implements RequestBodyAdvice {
                                            Class<? extends HttpMessageConverter<?>> converterType)
             throws IOException {
 
+        // === 安全防护：请求体大小限制 ===
         byte[] encryptedBytes = readAllBytes(inputMessage.getBody());
         if (encryptedBytes.length == 0) {
             return inputMessage;
+        }
+        if (encryptedBytes.length > MAX_BODY_SIZE) {
+            throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED,
+                    "请求体过大: " + encryptedBytes.length + " bytes");
         }
         String encryptedBody = new String(encryptedBytes, StandardCharsets.UTF_8);
 

@@ -67,6 +67,21 @@ public class Sm2SdkProperties {
     /** 是否启用 Redis 会话存储 */
     private boolean redisSessionStore;
 
+    /** 是否启用服务端角色（注册握手端点、拦截器等）。默认 true */
+    private boolean serverRole = true;
+
+    /** 握手速率限制（每秒最大请求数）。默认 10 */
+    private int handshakeRateLimitPerSecond = 10;
+
+    /** 握手时间戳有效窗口（毫秒）。默认 30000（30 秒） */
+    private long timestampWindowMs = 30000L;
+
+    /** 最大请求体大小（字节）。默认 1048576（1 MB） */
+    private int maxRequestBodySize = 1_048_576;
+
+    /** 是否在错误响应中包含异常详情（仅调试用，生产环境应设为 false）。默认 false */
+    private boolean includeErrorDetail;
+
     /** 对端配置列表 */
     private List<PeerProperties> peers = new ArrayList<>();
 
@@ -172,6 +187,29 @@ public class Sm2SdkProperties {
 
     public boolean isRedisSessionStore() { return redisSessionStore; }
     public void setRedisSessionStore(boolean redisSessionStore) { this.redisSessionStore = redisSessionStore; }
+
+    public boolean isServerRole() { return serverRole; }
+    public void setServerRole(boolean serverRole) { this.serverRole = serverRole; }
+
+    public int getHandshakeRateLimitPerSecond() { return handshakeRateLimitPerSecond; }
+    public void setHandshakeRateLimitPerSecond(int handshakeRateLimitPerSecond) {
+        this.handshakeRateLimitPerSecond = handshakeRateLimitPerSecond;
+    }
+
+    public long getTimestampWindowMs() { return timestampWindowMs; }
+    public void setTimestampWindowMs(long timestampWindowMs) {
+        this.timestampWindowMs = timestampWindowMs;
+    }
+
+    public int getMaxRequestBodySize() { return maxRequestBodySize; }
+    public void setMaxRequestBodySize(int maxRequestBodySize) {
+        this.maxRequestBodySize = maxRequestBodySize;
+    }
+
+    public boolean isIncludeErrorDetail() { return includeErrorDetail; }
+    public void setIncludeErrorDetail(boolean includeErrorDetail) {
+        this.includeErrorDetail = includeErrorDetail;
+    }
 
     public List<PeerProperties> getPeers() {
         return peers;

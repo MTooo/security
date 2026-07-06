@@ -45,8 +45,17 @@ public class Sm2SdkAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Sm2ServerConfig sm2ServerConfig(Sm2SdkConfig sdkConfig) {
-        return new Sm2ServerConfig(sdkConfig);
+    public Sm2ServerConfig sm2ServerConfig(Sm2SdkConfig sdkConfig, Sm2SdkProperties properties) {
+        return new Sm2ServerConfig(
+                sdkConfig,
+                Sm2ServerConfig.DEFAULT_HANDSHAKE_INIT_PATH,
+                Sm2ServerConfig.DEFAULT_HANDSHAKE_CONFIRM_PATH,
+                Sm2ServerConfig.DEFAULT_NONCE_VALIDATION_ENABLED,
+                sdkConfig.getServerId() != null ? sdkConfig.getServerId() : Sm2ServerConfig.DEFAULT_SERVER_ID,
+                properties.getHandshakeRateLimitPerSecond(),
+                properties.getTimestampWindowMs(),
+                properties.getMaxRequestBodySize(),
+                properties.isIncludeErrorDetail());
     }
 
     @Bean
@@ -100,6 +109,8 @@ public class Sm2SdkAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2HandshakeController sm2HandshakeController(SessionManager sessionManager,
                                                          Sm2ServerConfig serverConfig) {
         return new Sm2HandshakeController(sessionManager, serverConfig);
@@ -107,6 +118,8 @@ public class Sm2SdkAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2ServerInterceptor sm2ServerInterceptor(SessionManager sessionManager,
                                                      Sm2ServerConfig serverConfig,
                                                      ObjectProvider<NonceValidator> nonceValidatorProvider,
@@ -121,6 +134,8 @@ public class Sm2SdkAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(Sm2AccessController.class)
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2AccessController sm2AccessController(Sm2SdkConfig sdkConfig) {
         return new ConfigBasedAccessController(sdkConfig);
     }
@@ -128,18 +143,24 @@ public class Sm2SdkAutoConfiguration {
     // ==================== Filter ====================
 
     @Bean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2QueryDecryptFilter sm2QueryDecryptFilter(SessionManager sessionManager) {
         return new Sm2QueryDecryptFilter(sessionManager);
     }
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2RequestBodyAdvice sm2RequestBodyAdvice(SessionManager sessionManager) {
         return new Sm2RequestBodyAdvice(sessionManager);
     }
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public Sm2ResponseBodyAdvice sm2ResponseBodyAdvice(SessionManager sessionManager,
                                                        Sm2ServerConfig serverConfig) {
         return new Sm2ResponseBodyAdvice(sessionManager, serverConfig);
@@ -149,8 +170,10 @@ public class Sm2SdkAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Sm2SdkExceptionHandler sm2SdkExceptionHandler() {
-        return new Sm2SdkExceptionHandler();
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
+    public Sm2SdkExceptionHandler sm2SdkExceptionHandler(Sm2ServerConfig serverConfig) {
+        return new Sm2SdkExceptionHandler(serverConfig);
     }
 
     // ==================== 客户端组件 ====================
@@ -175,6 +198,8 @@ public class Sm2SdkAutoConfiguration {
     // ==================== Web MVC 配置 ====================
 
     @Bean
+    @ConditionalOnProperty(prefix = "sm2.sdk", name = "server-role", havingValue = "true",
+            matchIfMissing = true)
     public WebMvcConfigurer sm2WebMvcConfigurer(Sm2ServerInterceptor interceptor,
                                                  Sm2EncryptedBodyConverter encryptedBodyConverter) {
         return new WebMvcConfigurer() {
