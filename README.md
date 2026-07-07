@@ -34,7 +34,7 @@
 
 SDK 尚未发布到公共 Maven 仓库，可通过以下方式一或方式二获取。
 
-### Maven 依赖
+### Maven 依赖（暂不支持请看下载jar）
 
 ```xml
 <!-- Spring Boot 2.7 + JDK 8/11 -->
@@ -68,6 +68,8 @@ SDK 尚未发布到公共 Maven 仓库，可通过以下方式一或方式二获
 | `sm2-sdk-spring-boot-starter-1.0.0.jar` | Boot 2.7 一体化包 | **内置全部依赖**（Hutool、Jackson、BouncyCastle） |
 | `sm2-sdk-spring-boot3-starter-1.0.0.jar` | Boot 3.x 一体化包 | **内置全部依赖** |
 
+分两种方式引用：**1.安装到本地 Maven 仓库  2.引用本地 lib 目录的 JAR**
+
 ### 方式一：安装到本地 Maven 仓库
 
 将 JAR 包安装到本地 `~/.m2` 仓库，安装后即可按上方 Maven 依赖正常引用。
@@ -89,7 +91,7 @@ mvn install:install-file \
   -Dversion=1.0.0 \
   -Dpackaging=jar
 
-# 安装 Spring Boot 2.7 Starter（内置全部依赖，推荐）
+# 安装 Spring Boot 2.7 Starter（内置全部依赖自动引入前两个，推荐）
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-spring-boot-starter-1.0.0.jar \
   -DgroupId=com.sm2sdk \
@@ -97,7 +99,7 @@ mvn install:install-file \
   -Dversion=1.0.0 \
   -Dpackaging=jar
 
-# 安装 Spring Boot 3.x Starter（内置全部依赖，推荐）
+# 安装 Spring Boot 3.x Starter（内置全部依赖自动引入前两个，推荐）
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-spring-boot3-starter-1.0.0.jar \
   -DgroupId=com.sm2sdk \
@@ -120,13 +122,13 @@ mvn install:install-file \
     <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot-starter-1.0.0.jar</systemPath>
 </dependency>
 <!-- springboot3       -->
-        <dependency>
-            <groupId>com.sm2sdk</groupId>
-            <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
-        </dependency>
+<dependency>
+    <groupId>com.sm2sdk</groupId>
+    <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
+    <version>1.0.0</version>
+    <scope>system</scope>
+    <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
+</dependency>
 ```
 
 > **注意**：`system` scope 的依赖不会传递。Starter JAR 已内置全部依赖，无需额外引入；若使用 `sm2-sdk-core`，需自行提供 bcprov、hutool 等依赖。
@@ -159,34 +161,6 @@ java -cp sm2-sdk-spring-boot-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen 3
 java -cp sm2-sdk-spring-boot3-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen 3
 ```
 
-### 方式二：从 Core JAR（需额外提供依赖）
-
-```bash
-# Windows
-java -cp "sm2-sdk-core-1.0.0.jar;bcprov-jdk18on-1.84.jar;hutool-all-5.8.32.jar" com.sm2sdk.core.util.Sm2KeyGen
-
-# Linux / Mac
-java -cp "sm2-sdk-core-1.0.0.jar:bcprov-jdk18on-1.84.jar:hutool-all-5.8.32.jar" com.sm2sdk.core.util.Sm2KeyGen
-```
-
-### 方式三：开发期（Maven）
-
-```bash
-cd sm2-sdk
-
-# 首次需先编译
-mvn clean install -DskipTests
-
-# 生成密钥
-mvn exec:java -pl core -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen"
-
-# Windows 脚本
-tools\keygen.bat
-
-# Linux / Mac 脚本
-tools/keygen.sh
-```
-
 ### 输出示例
 
 ```
@@ -209,29 +183,30 @@ sm4-key-base64:  OnssHU5faoucDR4vOktcbQ==          (base64, 可直接填入 loca
 sm2:
   sdk:
     # ===== 密钥配置（必填） =====
-    sm2-private-key: "3f5731fe..."
-    sm2-public-key: "04182d88..."
-    server-id: my-server        # 别人调我时，我的身份
-    client-id: app-a            # 我调别人时，报上自己的身份
-
+    sm2-private-key: "3f5731fe..." 	# 自己生成的sm2的私钥
+    sm2-public-key: "04182d88..." 	# 自己生成的sm2公钥，需要给到对方
+    server-id: my-server        	# 我自己的身份标识
+    redis-session-store: true		# 启用redis存储密钥，不设置则用的是内存
+    redis-key-prefix: sm2-server	# 设置redis存储密钥的前缀键
+    local-secret-key: "fnSs....."	# 设置存储sm4密钥，防止redis被脱库拿到明文的密钥
     # ===== 对端配置 =====
     peers:
       # 对端 A
-      - public-key: "04aaabbb..."
-        server-url: "https://service-a.com"
+      - public-key: "04aaabbb..." # 对方的公钥
+        server-url: "https://service-a.com" # 对方的地址
         server-id: service-a          # 对端 A 声称的 server-id
       # 对端 B
       - public-key: "04cccddd..."
         server-url: "https://service-b.com"
         server-id: service-b
-      # 本机闭环测试
+      # 本机闭环测试 不做闭环测试可不配置
       - public-key: "04182d88..."     # 自己的公钥
         server-url: "http://localhost:8080"
         server-id: my-server          # 与全局 server-id 一致
 
-    # ===== 安全加固（可选，均有默认值） =====
+    # ===== 安全加固（可选，均有默认值 以下全是默认值 特殊情况可配置） =====
     server-role: true                      # 是否启用服务端端点、拦截器。纯客户端设为 false
-    handshake-rate-limit-per-second: 10    # 每秒最大握手次数，超过返回 408，防止 CPU/内存耗尽
+    handshake-rate-limit-per-second: 5     # 每个对端每秒最大握手次数，超过返回 408，防止 CPU/内存耗尽 握手成功后5分钟内有效
     timestamp-window-ms: 30000             # 握手时间戳有效期(ms)，超时拒绝，防止重放攻击
     max-request-body-size: 1048576         # 请求体最大字节数，超过拒绝，防止大密文 OOM
     include-error-detail: false            # 生产必须 false，调试才开 true，防止泄露内部实现

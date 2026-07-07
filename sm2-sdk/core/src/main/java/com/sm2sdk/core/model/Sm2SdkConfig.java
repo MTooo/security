@@ -417,6 +417,8 @@ public class Sm2SdkConfig {
         private String publicKey;
         private String serverUrl;
         private String serverId;
+        /** 该对端的独立握手速率限制（次/秒），0 或未设置则使用全局默认值 */
+        private int rateLimitPerSecond;
 
         public PeerConfig() {
         }
@@ -451,6 +453,12 @@ public class Sm2SdkConfig {
         public String getServerId() { return serverId; }
         public void setServerId(String serverId) { this.serverId = serverId; }
 
+        /** 该对端的独立握手速率限制（次/秒），0 表示使用全局默认值 */
+        public int getRateLimitPerSecond() { return rateLimitPerSecond; }
+        public void setRateLimitPerSecond(int rateLimitPerSecond) {
+            this.rateLimitPerSecond = rateLimitPerSecond;
+        }
+
         // Fluent setters
 
         public PeerConfig withPublicKey(String publicKey) {
@@ -465,6 +473,11 @@ public class Sm2SdkConfig {
 
         public PeerConfig withServerId(String serverId) {
             this.serverId = serverId;
+            return this;
+        }
+
+        public PeerConfig withRateLimitPerSecond(int rateLimitPerSecond) {
+            this.rateLimitPerSecond = rateLimitPerSecond;
             return this;
         }
 

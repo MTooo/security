@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 服务端握手控制器，处理客户端发起的 SM2 密钥交换握手请求。
@@ -33,7 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <h3>安全防护</h3>
  * <ul>
- *   <li>速率限制：每秒最多处理 N 个握手请求（默认 10），防止 DoS</li>
+ *   <li>对端白名单：仅 peers 中配置的 clientId 允许握手，不在白名单的直接拒绝（零 CPU 消耗）</li>
+ *   <li>速率限制：按 clientId 独立限流（默认 50/秒/客户端），一客户端超限不影响其他</li>
  *   <li>时间戳校验：握手请求时间戳必须在有效窗口内（默认 30 秒），防止重放</li>
  *   <li>握手确认验证：服务端存储 HandshakeResult 并完整验证 SA 值</li>
  *   <li>密钥材料安全：HandshakeResult 在确认验证后立即清零并移除</li>
@@ -51,11 +52,24 @@ public class Sm2HandshakeController {
     private final ConcurrentHashMap<String, Sm2KeyExchange.HandshakeResult> pendingResults
             = new ConcurrentHashMap<>();
 
-    /** 速率限制：当前秒的时间戳。 */
-    private final AtomicLong rateLimitSecond = new AtomicLong(0);
+    /**
+     * 按 clientId 独立限流。Key: clientId（即 peers 中配置的 server-id），
+     * Value: 该客户端的速率窗口。一个客户端超限不影响其他客户端。
+     */
+    private final ConcurrentHashMap<String, ClientRateWindow> clientRateWindows
+            = new ConcurrentHashMap<>();
 
-    /** 速率限制：当前秒内的请求计数。 */
-    private final AtomicInteger rateLimitCount = new AtomicInteger(0);
+    /**
+     * 单客户端速率窗口。记录当前秒的时间戳和该秒内的请求计数。
+     */
+    private static class ClientRateWindow {
+        volatile long second;
+        final AtomicInteger count = new AtomicInteger(0);
+
+        ClientRateWindow(long second) {
+            this.second = second;
+        }
+    }
 
     /**
      * 创建握手控制器。
@@ -90,13 +104,15 @@ public class Sm2HandshakeController {
     public HandshakeServerResp handleInit(@RequestBody HandshakeInit init) {
         Objects.requireNonNull(init, "init must not be null");
 
-        // === 安全防护：速率限制 ===
-        checkRateLimit();
+        String clientId = init.getClientId();
 
-        // === 安全防护：参数完整性 + 时间戳窗口 ===
+        // === 安全防护 ①：白名单校验 + 按 clientId 独立限流 ===
+        checkClientAccess(clientId);
+
+        // === 安全防护 ②：参数完整性 + 时间戳窗口 ===
         validateInit(init);
 
-        log.info("收到客户端握手请求: clientId={}", init.getClientId());
+        log.info("收到客户端握手请求: clientId={}", clientId);
 
         Sm2KeyExchange keyExchange = sessionManager.getKeyExchange();
         byte[] serverPrivKey = SessionManager.hexToBytes(
@@ -158,19 +174,20 @@ public class Sm2HandshakeController {
     public void handleConfirm(@RequestBody HandshakeConfirm confirm) {
         Objects.requireNonNull(confirm, "confirm must not be null");
 
-        // === 安全防护：速率限制 ===
-        checkRateLimit();
-
         String sessionId = confirm.getSessionId();
         if (sessionId == null || sessionId.isEmpty()) {
             throw new Sm2SdkException(ErrorCode.SESSION_NOT_FOUND_OR_EXPIRED,
                     "确认请求缺少 sessionId");
         }
 
-        log.info("收到客户端握手确认: sessionId={}", sessionId);
+        // 从会话中获取 clientId 用于限流
+        Session session = sessionManager.getSession(sessionId);
+        String clientId = session.getClientId();
 
-        // 验证会话存在且未过期
-        sessionManager.getSession(sessionId);
+        // === 安全防护：按 clientId 独立限流 ===
+        checkClientAccess(clientId);
+
+        log.info("收到客户端握手确认: sessionId={}, clientId={}", sessionId, clientId);
 
         // === 安全防护：获取暂存的 HandshakeResult 并完整验证 SA 值 ===
         Sm2KeyExchange.HandshakeResult result = pendingResults.remove(sessionId);
@@ -208,27 +225,63 @@ public class Sm2HandshakeController {
     // ==================== 安全防护方法 ====================
 
     /**
-     * 速率限制检查。使用秒级滑动窗口，超过限制抛出异常。
+     * 白名单校验 + 按 clientId 独立限流。
+     *
+     * <p>逻辑：
+     * <ol>
+     *   <li>如果配置了 peers 列表 → 检查 clientId 是否在白名单中，不在直接拒绝</li>
+     *   <li>如果未配置 peers（向后兼容：自测/闭环场景）→ 允许所有，按 clientId 限流</li>
+     *   <li>按 clientId 做秒级滑动窗口限流，默认 50 次/秒/客户端</li>
+     * </ol>
+     *
+     * <p>白名单检查在限流之前执行，未知客户端不消耗任何配额。
+     *
+     * @param clientId 客户端标识（HandshakeInit 中的 clientId 或 Session 中的 clientId）
+     * @throws Sm2SdkException 如果客户端不在白名单或速率超限
      */
-    private void checkRateLimit() {
+    private void checkClientAccess(String clientId) {
+        List<com.sm2sdk.core.model.Sm2SdkConfig.PeerConfig> peers =
+                config.getSdkConfig().getPeerConfigs();
+
+        // ① 白名单校验（peers 已配置时才生效）
+        if (peers != null && !peers.isEmpty()) {
+            boolean found = false;
+            for (com.sm2sdk.core.model.Sm2SdkConfig.PeerConfig peer : peers) {
+                if (clientId.equals(peer.getServerId())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.warn("未知客户端握手被拒绝: clientId={} (不在 peers 白名单中)", clientId);
+                throw new Sm2SdkException(ErrorCode.CLIENT_ACCESS_DENIED,
+                        "客户端 [" + clientId + "] 未授权，握手被拒绝");
+            }
+        }
+
+        // ② 按 clientId 独立限流
         int maxPerSecond = config.getHandshakeRateLimitPerSecond();
         long now = System.currentTimeMillis();
         long currentSecond = now / 1000;
 
-        // 进入新的秒 → 重置计数
-        long lastSecond = rateLimitSecond.get();
-        if (currentSecond != lastSecond) {
-            if (rateLimitSecond.compareAndSet(lastSecond, currentSecond)) {
-                rateLimitCount.set(0);
+        ClientRateWindow window = clientRateWindows.computeIfAbsent(
+                clientId, k -> new ClientRateWindow(currentSecond));
+
+        if (currentSecond != window.second) {
+            synchronized (window) {
+                if (currentSecond != window.second) {
+                    window.second = currentSecond;
+                    window.count.set(0);
+                }
             }
-            // 如果 CAS 失败（其他线程已更新），继续使用已有值
         }
 
-        int count = rateLimitCount.incrementAndGet();
+        int count = window.count.incrementAndGet();
         if (count > maxPerSecond) {
-            log.warn("握手请求速率超限: count={}, limit={}/s", count, maxPerSecond);
+            log.warn("握手速率超限: clientId={}, count={}/s, limit={}/s",
+                    clientId, count, maxPerSecond);
             throw new Sm2SdkException(ErrorCode.HANDSHAKE_TIMEOUT,
-                    "握手请求过于频繁，请稍后重试（限制: " + maxPerSecond + "/秒）");
+                    "握手请求过于频繁，请稍后重试（限制: " + maxPerSecond + "/秒/客户端）");
         }
     }
 

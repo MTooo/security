@@ -10,8 +10,7 @@ sm2:
   sdk:
     sm2-private-key: "ba5f36197c0db7b9138be532dd097a728816694f8c047a9065b657287e59f8df"
     sm2-public-key: "04dd0815d3cfb7d68912a03f786412cc409c5de066fd9733c413f77a98eba0c69dce3c755195e07ef2567b4d5e9ded310e3885605f07ae13341b1d3e32ec0d6efc"
-    server-id: gzbd-sfrz        # 别人调我时，我的身份
-    client-id: gzbd-sfrz            # 我调别人时，报上自己的身份
+    server-id: gzbd-sfrz        # 我的身份
     redis-session-store: true
     redis-key-prefix: sm2-server
     peers:

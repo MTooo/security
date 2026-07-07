@@ -24,8 +24,8 @@ public class Sm2ServerConfig {
     /** 默认服务端标识（与客户端 AutoConfiguration 创建的 peerId 保持一致） */
     public static final String DEFAULT_SERVER_ID = "default";
 
-    /** 默认握手速率限制（每秒最大请求数） */
-    public static final int DEFAULT_HANDSHAKE_RATE_LIMIT = 10;
+    /** 默认握手速率限制（每秒最大请求数），兼顾安全与可用性 */
+    public static final int DEFAULT_HANDSHAKE_RATE_LIMIT = 50;
 
     /** 默认握手时间戳有效窗口（毫秒），30 秒 */
     public static final long DEFAULT_TIMESTAMP_WINDOW_MS = 30_000L;

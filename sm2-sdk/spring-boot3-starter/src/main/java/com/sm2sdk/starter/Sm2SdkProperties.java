@@ -70,8 +70,8 @@ public class Sm2SdkProperties {
     /** 是否启用服务端角色（注册握手端点、拦截器等）。默认 true */
     private boolean serverRole = true;
 
-    /** 握手速率限制（每秒最大请求数）。默认 10 */
-    private int handshakeRateLimitPerSecond = 10;
+    /** 握手速率限制（每秒最大请求数）。默认 5，兼顾安全与可用性 */
+    private int handshakeRateLimitPerSecond = 5;
 
     /** 握手时间戳有效窗口（毫秒）。默认 30000（30 秒） */
     private long timestampWindowMs = 30000L;
@@ -239,7 +239,10 @@ public class Sm2SdkProperties {
         config.setSm2PrivateKey(sm2PrivateKey);
         config.setSm2PublicKey(sm2PublicKey);
         config.setServerUrl(serverUrl);
-        config.setClientId(clientId);
+        // client-id 未配置时自动取 server-id 的值（大部分场景两者相同）
+        config.setClientId(clientId != null && !clientId.isEmpty()
+                ? clientId
+                : (serverId != null ? serverId : "default"));
         config.setServerId(serverId != null ? serverId : "default");
         config.setHandshakeTimeoutMs(handshakeTimeoutMs);
         config.setSessionTimeoutMs(sessionTimeoutMs);
