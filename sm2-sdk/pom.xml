@@ -68,6 +68,9 @@
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
         <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
+        <proguard-maven-plugin.version>2.6.1</proguard-maven-plugin.version>
+        <proguard.version>7.6.0</proguard.version>
+        <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -210,6 +213,15 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
@@ -251,6 +263,23 @@
                     <configuration>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.github.wvengen</groupId>
+                    <artifactId>proguard-maven-plugin</artifactId>
+                    <version>${proguard-maven-plugin.version}</version>
+                    <configuration>
+                        <proguardVersion>${proguard.version}</proguardVersion>
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <skip>false</skip>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-maven-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

@@ -61,6 +61,57 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
             </plugin>
+
+            <!-- ProGuard 混淆 -->
+            <plugin>
+                <groupId>com.github.wvengen</groupId>
+                <artifactId>proguard-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>proguard</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <injar>${project.build.finalName}.jar</injar>
+                    <outjar>${project.build.finalName}-obfuscated.jar</outjar>
+                    <proguardInclude>${project.basedir}/../proguard-sdk.pro</proguardInclude>
+                    <proguardJar>${settings.localRepository}/net/sf/proguard/proguard-base/6.2.2/proguard-base-6.2.2.jar</proguardJar>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sf.proguard</groupId>
+                        <artifactId>proguard-base</artifactId>
+                        <version>6.2.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- 将混淆后的 jar 附加到 Maven 生命周期 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-obfuscated</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${project.build.directory}/${project.build.finalName}-obfuscated.jar</file>
+                                    <type>jar</type>
+                                    <classifier>obfuscated</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
