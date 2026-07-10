@@ -137,14 +137,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- ProGuard 7.x（仅用于混淆阶段，provided 不打包进 jar） -->
-        <dependency>
-            <groupId>com.guardsquare</groupId>
-            <artifactId>proguard-base</artifactId>
-            <version>7.4.1</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -201,83 +193,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-
-            <!-- 复制 ProGuard 7.x + 传递依赖到临时目录 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-proguard-deps</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeGroupIds>com.guardsquare,org.jetbrains.kotlin,com.google.code.gson,org.apache.logging.log4j,org.json,org.jetbrains.intellij.deps,org.ow2.asm,org.slf4j</includeGroupIds>
-                            <!-- log4j-to-slf4j 在无 slf4j 实现时会吞掉 ProGuard 日志输出，需排除 -->
-                            <excludeArtifactIds>log4j-to-slf4j,log4j-slf4j-impl,log4j-slf4j2-impl</excludeArtifactIds>
-                            <outputDirectory>${project.build.directory}/proguard-libs</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- ProGuard 7.x 混淆（通过 exec:exec 调用，支持 JDK 17 字节码） -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.6.2</version>
-                <executions>
-                    <execution>
-                        <id>proguard-obfuscate</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <executable>java</executable>
-                    <arguments>
-                        <argument>-cp</argument>
-                        <argument>${project.build.directory}/proguard-libs/*</argument>
-                        <argument>proguard.ProGuard</argument>
-                        <argument>-injars</argument>
-                        <argument>${project.build.directory}/${project.build.finalName}.jar(!META-INF/maven/**)</argument>
-                        <argument>-outjars</argument>
-                        <argument>${project.build.directory}/${project.build.finalName}-obfuscated.jar</argument>
-                        <argument>-include</argument>
-                        <argument>${project.basedir}/../proguard-sdk.pro</argument>
-                        <argument>-printmapping</argument>
-                        <argument>${project.build.directory}/proguard_map.txt</argument>
-                    </arguments>
-                </configuration>
-            </plugin>
-
-            <!-- 将混淆后的 jar 附加到 Maven 生命周期 -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-obfuscated</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>attach-artifact</goal>
-                        </goals>
-                        <configuration>
-                            <artifacts>
-                                <artifact>
-                                    <file>${project.build.directory}/${project.build.finalName}-obfuscated.jar</file>
-                                    <type>jar</type>
-                                    <classifier>obfuscated</classifier>
-                                </artifact>
-                            </artifacts>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
