@@ -347,8 +347,10 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
         result.setSm4Key(sm4Key);
         result.setSm4Iv(sm4Iv);
         result.setSharedKey(derived);
-        result.setZA(Base64.getEncoder().encodeToString(zaBytes));
-        result.setZB(Base64.getEncoder().encodeToString(zbBytes));
+        result.setZa(Base64.getEncoder().encodeToString(zaBytes));
+        result.setZb(Base64.getEncoder().encodeToString(zbBytes));
+        result.setX1Bytes(x1Bytes);
+        result.setY1Bytes(y1Bytes);
 
         return result;
     }
@@ -398,7 +400,7 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
             init.setEphemeralPublicKey(Base64.getEncoder().encodeToString(raBytes));
             init.setTimestamp(timestamp);
             init.setSignature(Base64.getEncoder().encodeToString(signature));
-            init.setZA(Base64.getEncoder().encodeToString(zaBytes));
+            init.setZa(Base64.getEncoder().encodeToString(zaBytes));
 
             return init;
 
@@ -429,7 +431,7 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
             ECPoint rbPoint = decodeAndVerifyPoint(rbEncoded);
 
             // 2. 解码 ZA（来自 init 请求）
-            byte[] zaBytes = Base64.getDecoder().decode(sent.getZA());
+            byte[] zaBytes = Base64.getDecoder().decode(sent.getZa());
 
             // 3. 计算 ZB（服务端身份摘要）
             byte[] serverIdBytes = serverId.getBytes(StandardCharsets.UTF_8);
@@ -456,11 +458,11 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
             result.setRA(raEncoded);
             result.setRB(rbEncoded);
 
-            // 5. 验证 SB
+            // 5. 验证 SB（使用 result 中存储的共享点坐标）
             byte[] sbReceived = Base64.getDecoder().decode(resp.getConfirmation());
-            byte[] innerHashInput = concat(this.currentX1Bytes, zaBytes, zbBytes,
+            byte[] innerHashInput = concat(result.getX1Bytes(), zaBytes, zbBytes,
                     raEncoded, rbEncoded);
-            byte[] sbExpected = computeConfirmation((byte) 0x02, this.currentY1Bytes, innerHashInput);
+            byte[] sbExpected = computeConfirmation((byte) 0x02, result.getY1Bytes(), innerHashInput);
 
             if (!Arrays.equals(sbReceived, sbExpected)) {
                 throw new Sm2SdkException(ErrorCode.KEY_CONFIRM_FAILED_SB,
@@ -487,19 +489,21 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
             // 从 result 中获取各参数
             byte[] raBytes = result.getRA();
             byte[] rbBytes = result.getRB();
-            byte[] zaBytes = Base64.getDecoder().decode(result.getZA());
-            byte[] zbBytes = Base64.getDecoder().decode(result.getZB());
+            byte[] zaBytes = Base64.getDecoder().decode(result.getZa());
+            byte[] zbBytes = Base64.getDecoder().decode(result.getZb());
 
-            // 使用存储的共享点坐标
-            if (this.currentX1Bytes == null || this.currentY1Bytes == null) {
+            // 从 result 获取共享点坐标
+            byte[] x1Bytes = result.getX1Bytes();
+            byte[] y1Bytes = result.getY1Bytes();
+            if (x1Bytes == null || y1Bytes == null) {
                 throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED,
                         "未找到共享密钥点坐标，请先调用 processServerResponse");
             }
 
             // 计算 SA = SM3(0x03 || y1 || SM3(x1 || ZA || ZB || RA || RB))
-            byte[] innerHashInput = concat(this.currentX1Bytes, zaBytes, zbBytes,
+            byte[] innerHashInput = concat(x1Bytes, zaBytes, zbBytes,
                     raBytes, rbBytes);
-            byte[] sa = computeConfirmation((byte) 0x03, this.currentY1Bytes, innerHashInput);
+            byte[] sa = computeConfirmation((byte) 0x03, y1Bytes, innerHashInput);
 
             HandshakeConfirm confirm = new HandshakeConfirm();
             confirm.setSessionId(result.getSessionId());
@@ -519,6 +523,13 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
     public HandshakeResult processClientInit(HandshakeInit init, byte[] serverPrivKey,
                                               byte[] clientPubKey, String serverId,
                                               String clientId) throws Sm2SdkException {
+        // 参数校验（防御性编程，避免 NPE）
+        if (clientId == null) {
+            throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED, "clientId 不能为 null");
+        }
+        if (serverId == null) {
+            throw new Sm2SdkException(ErrorCode.HANDSHAKE_TIMEOUT, "serverId 不能为 null，请在 yml 中配置 sm2.sdk.server-id");
+        }
         try {
             // 1. 验证时间戳偏差 |now - ts| <= 300s
             long now = System.currentTimeMillis();
@@ -534,7 +545,7 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
             ECPoint raPoint = decodeAndVerifyPoint(raEncoded);
 
             // 3. 验证客户端签名
-            byte[] zaBytes = Base64.getDecoder().decode(init.getZA());
+            byte[] zaBytes = Base64.getDecoder().decode(init.getZa());
             byte[] shortClientIdBytes = init.getClientId().getBytes(StandardCharsets.UTF_8);
             byte[] timestampBytes = longToBytes(ts);
             byte[] signMessage = concat(raEncoded, shortClientIdBytes, zaBytes, timestampBytes);
@@ -586,10 +597,11 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
                 result.setSessionId(sessionId);
 
                 // 8. 计算 SB = SM3(0x02 || y1 || SM3(x1 || ZA || ZB || RA || RB))
-                byte[] innerHashInput = concat(this.currentX1Bytes, zaBytes, zbBytes,
+                // 使用 result 中存储的共享点坐标
+                byte[] innerHashInput = concat(result.getX1Bytes(), zaBytes, zbBytes,
                         raEncoded, rbEncoded);
                 this.currentConfirmationValue = computeConfirmation(
-                        (byte) 0x02, this.currentY1Bytes, innerHashInput);
+                        (byte) 0x02, result.getY1Bytes(), innerHashInput);
 
                 return result;
 
@@ -611,19 +623,21 @@ public class HutoolSm2KeyExchange implements Sm2KeyExchange {
         try {
             byte[] raBytes = result.getRA();
             byte[] rbBytes = result.getRB();
-            byte[] zaBytes = Base64.getDecoder().decode(result.getZA());
-            byte[] zbBytes = Base64.getDecoder().decode(result.getZB());
+            byte[] zaBytes = Base64.getDecoder().decode(result.getZa());
+            byte[] zbBytes = Base64.getDecoder().decode(result.getZb());
 
-            // 使用存储的共享点坐标（在 processClientInit 中已计算）
-            if (this.currentX1Bytes == null || this.currentY1Bytes == null) {
+            // 从 HandshakeResult 获取共享点坐标（在 computeSharedKey 中已存储）
+            byte[] x1Bytes = result.getX1Bytes();
+            byte[] y1Bytes = result.getY1Bytes();
+            if (x1Bytes == null || y1Bytes == null) {
                 throw new Sm2SdkException(ErrorCode.CLIENT_CERT_VERIFY_FAILED,
                         "未找到共享密钥点坐标，请先调用 processClientInit");
             }
 
             // 计算期望的 SA
-            byte[] innerHashInput = concat(this.currentX1Bytes, zaBytes, zbBytes,
+            byte[] innerHashInput = concat(x1Bytes, zaBytes, zbBytes,
                     raBytes, rbBytes);
-            byte[] saExpected = computeConfirmation((byte) 0x03, this.currentY1Bytes, innerHashInput);
+            byte[] saExpected = computeConfirmation((byte) 0x03, y1Bytes, innerHashInput);
             byte[] saReceived = Base64.getDecoder().decode(confirm.getConfirmation());
 
             return Arrays.equals(saExpected, saReceived);

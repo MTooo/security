@@ -17,7 +17,7 @@ public class HandshakeInit {
     private String ephemeralPublicKey;
     private long timestamp;
     private String signature;
-    private String ZA;
+    private String za;
 
     /** No-arg constructor for JSON deserialisation. */
     public HandshakeInit() {
@@ -35,13 +35,13 @@ public class HandshakeInit {
      */
     public HandshakeInit(String protocolVersion, String clientId,
                          String ephemeralPublicKey, long timestamp,
-                         String signature, String ZA) {
+                         String signature, String za) {
         this.protocolVersion = protocolVersion;
         this.clientId = clientId;
         this.ephemeralPublicKey = ephemeralPublicKey;
         this.timestamp = timestamp;
         this.signature = signature;
-        this.ZA = ZA;
+        this.za = za;
     }
 
     // ========== Getters / Setters ==========
@@ -86,12 +86,12 @@ public class HandshakeInit {
         this.signature = signature;
     }
 
-    public String getZA() {
-        return ZA;
+    public String getZa() {
+        return za;
     }
 
-    public void setZA(String ZA) {
-        this.ZA = ZA;
+    public void setZa(String za) {
+        this.za = za;
     }
 
     @Override

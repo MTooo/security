@@ -103,8 +103,10 @@ public interface Sm2KeyExchange {
         private byte[] sm4Key;
         private byte[] sm4Iv;
         private byte[] sharedKey;
-        private String ZA;
-        private String ZB;
+        private String za;
+        private String zb;
+        private byte[] x1Bytes;
+        private byte[] y1Bytes;
         private byte[] RA;
         private byte[] RB;
 
@@ -125,14 +127,14 @@ public interface Sm2KeyExchange {
          * @param RB        服务端临时公钥（原始字节）
          */
         public HandshakeResult(String sessionId, byte[] sm4Key, byte[] sm4Iv,
-                               byte[] sharedKey, String ZA, String ZB,
+                               byte[] sharedKey, String za, String zb,
                                byte[] RA, byte[] RB) {
             this.sessionId = sessionId;
             this.sm4Key = sm4Key;
             this.sm4Iv = sm4Iv;
             this.sharedKey = sharedKey;
-            this.ZA = ZA;
-            this.ZB = ZB;
+            this.za = za;
+            this.zb = zb;
             this.RA = RA;
             this.RB = RB;
         }
@@ -171,21 +173,26 @@ public interface Sm2KeyExchange {
             this.sharedKey = sharedKey;
         }
 
-        public String getZA() {
-            return ZA;
+        public String getZa() {
+            return za;
         }
 
-        public void setZA(String ZA) {
-            this.ZA = ZA;
+        public void setZa(String za) {
+            this.za = za;
         }
 
-        public String getZB() {
-            return ZB;
+        public String getZb() {
+            return zb;
         }
 
-        public void setZB(String ZB) {
-            this.ZB = ZB;
+        public void setZb(String zb) {
+            this.zb = zb;
         }
+
+        public byte[] getX1Bytes() { return x1Bytes; }
+        public void setX1Bytes(byte[] x1Bytes) { this.x1Bytes = x1Bytes; }
+        public byte[] getY1Bytes() { return y1Bytes; }
+        public void setY1Bytes(byte[] y1Bytes) { this.y1Bytes = y1Bytes; }
 
         public byte[] getRA() {
             return RA;
