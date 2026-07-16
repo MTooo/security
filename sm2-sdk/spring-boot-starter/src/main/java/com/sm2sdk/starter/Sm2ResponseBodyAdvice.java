@@ -1,6 +1,6 @@
 package com.sm2sdk.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.hutool.json.JSONUtil;
 import com.sm2sdk.core.annotation.Sm2Secured;
 import com.sm2sdk.core.exception.ErrorCode;
 import com.sm2sdk.core.exception.Sm2SdkException;
@@ -36,12 +36,10 @@ public class Sm2ResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
     private final SessionManager sessionManager;
     private final Sm2ServerConfig config;
-    private final ObjectMapper objectMapper;
 
     public Sm2ResponseBodyAdvice(SessionManager sessionManager, Sm2ServerConfig config) {
         this.sessionManager = Objects.requireNonNull(sessionManager, "sessionManager must not be null");
         this.config = Objects.requireNonNull(config, "config must not be null");
-        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -78,7 +76,7 @@ public class Sm2ResponseBodyAdvice implements ResponseBodyAdvice<Object> {
             if (body instanceof String) {
                 plainJson = (String) body;
             } else {
-                plainJson = objectMapper.writeValueAsString(body);
+                plainJson = JSONUtil.toJsonStr(body);
             }
 
             if (plainJson.isEmpty()) {

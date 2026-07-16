@@ -20,4 +20,4 @@ sm2:
         server-id: security-third         # 对端 A 声称的 server-id
     local-secret-key: "fnSsH8cyoBIhclWXtDScZw=="
 server:
-  port: 8080
+  port: 8081

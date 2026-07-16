@@ -1,6 +1,6 @@
 package com.sm2sdk.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.hutool.json.JSONUtil;
 import com.sm2sdk.core.session.Session;
 import com.sm2sdk.core.session.SessionManager;
 import org.slf4j.Logger;
@@ -29,11 +29,9 @@ public class Sm2QueryDecryptFilter implements Filter {
     private static final String HEADER_SM2_QUERY = "X-Sm2-Query";
 
     private final SessionManager sessionManager;
-    private final ObjectMapper objectMapper;
 
     public Sm2QueryDecryptFilter(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
-        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -65,7 +63,7 @@ public class Sm2QueryDecryptFilter implements Filter {
 
             String plainJson = sessionManager.decryptBody(sessionId, encryptedQuery);
             @SuppressWarnings("unchecked")
-            Map<String, Object> paramsMap = objectMapper.readValue(plainJson, Map.class);
+            Map<String, Object> paramsMap = JSONUtil.parseObj(plainJson);
             Map<String, String> params = new LinkedHashMap<>();
             for (Map.Entry<String, Object> e : paramsMap.entrySet()) {
                 params.put(e.getKey(), e.getValue() != null ? e.getValue().toString() : "");

@@ -1,8 +1,6 @@
 package com.sm2sdk.starter;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.hutool.json.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpInputMessage;
@@ -40,19 +38,11 @@ public class Sm2EncryptedBodyConverter implements HttpMessageConverter<Object> {
 
     private static final Logger log = LoggerFactory.getLogger(Sm2EncryptedBodyConverter.class);
 
-    private final ObjectMapper objectMapper;
+    /** 请求体最大大小（1MB，安全防护） */
+    private static final int MAX_BODY_SIZE = 1_000_000;
 
     public Sm2EncryptedBodyConverter() {
-        // === 安全防护：限制 Jackson 反序列化大小和深度 ===
-        StreamReadConstraints constraints = StreamReadConstraints.builder()
-                .maxStringLength(1_000_000)      // 最大字符串 1MB
-                .maxNumberLength(1_000)          // 最大数字长度（WS-2026-0003 修复）
-                .maxNestingDepth(100)            // 最大嵌套深度
-                .build();
-        JsonFactory factory = JsonFactory.builder()
-                .streamReadConstraints(constraints)
-                .build();
-        this.objectMapper = new ObjectMapper(factory);
+        // JSON 序列化使用 Hutool JSONUtil，无需预初始化
     }
 
     @Override
@@ -80,13 +70,18 @@ public class Sm2EncryptedBodyConverter implements HttpMessageConverter<Object> {
         if (bytes.length == 0) {
             return null;
         }
+        // 安全防护：限制请求体最大 1MB
+        if (bytes.length > MAX_BODY_SIZE) {
+            throw new HttpMessageNotReadableException(
+                    "请求体过大: " + bytes.length + " bytes (最大 " + MAX_BODY_SIZE + ")", inputMessage);
+        }
         String body = new String(bytes, StandardCharsets.UTF_8);
         log.debug("Sm2EncryptedBodyConverter.read: {} bytes, targetType={}", bytes.length, clazz);
 
         if (clazz == String.class) {
             return body;
         }
-        return objectMapper.readValue(body, clazz);
+        return JSONUtil.toBean(body, clazz);
     }
 
     @Override

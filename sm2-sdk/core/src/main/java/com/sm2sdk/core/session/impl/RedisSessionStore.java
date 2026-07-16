@@ -1,7 +1,6 @@
 package com.sm2sdk.core.session.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.hutool.json.JSONUtil;
 import com.sm2sdk.core.model.Sm2SdkConfig;
 import com.sm2sdk.core.session.Session;
 import com.sm2sdk.core.session.SessionStore;
@@ -57,7 +56,6 @@ public class RedisSessionStore implements SessionStore {
     private final RedisOperations redisOps;
     private final byte[] encryptionKey;
     private final long sessionTimeoutMs;
-    private final ObjectMapper objectMapper;
     private final SessionStore localFallback;
     private final SecureRandom secureRandom;
 
@@ -105,7 +103,6 @@ public class RedisSessionStore implements SessionStore {
                 ? config.getRedisKeyPrefix() : Sm2SdkConfig.DEFAULT_REDIS_KEY_PREFIX;
         this.redisOps = redisOps;
         this.sessionTimeoutMs = config.getSessionTimeoutMs();
-        this.objectMapper = new ObjectMapper();
         this.localFallback = new CaffeineSessionStore();
         this.secureRandom = new SecureRandom();
 
@@ -221,7 +218,7 @@ public class RedisSessionStore implements SessionStore {
             data.requestCount = session.getRequestCount();
             data.rekeyVersion = session.getRekeyVersion();
             data.destroyed = session.isDestroyed();
-            return objectMapper.writeValueAsString(data);
+            return JSONUtil.toJsonStr(data);
         } catch (Exception e) {
             throw new RuntimeException("序列化会话失败: " + session.getSessionId(), e);
         }
@@ -235,7 +232,7 @@ public class RedisSessionStore implements SessionStore {
      */
     private Session deserialize(String json) {
         try {
-            SessionData data = objectMapper.readValue(json, SessionData.class);
+            SessionData data = JSONUtil.toBean(json, SessionData.class);
 
             byte[] sm4Key;
             if (encryptionKey != null) {
@@ -384,35 +381,62 @@ public class RedisSessionStore implements SessionStore {
      * sm4Iv 字段存储 Base64 编码后的字符串。
      */
     static class SessionData {
-        @JsonProperty
+
         String sessionId;
-        @JsonProperty
         String clientId;
-        @JsonProperty
         String peerId;
-        @JsonProperty
         String sm4Key;
-        @JsonProperty
         String sm4Iv;
-        @JsonProperty
         long createTime;
-        @JsonProperty
         long lastAccessTime;
-        @JsonProperty
         long maxLifetime;
-        @JsonProperty
         int maxRequests;
-        @JsonProperty
         int requestCount;
-        @JsonProperty
         int rekeyVersion;
-        @JsonProperty
         boolean destroyed;
 
         /**
-         * 无参构造器（Jackson 反序列化需要）。
+         * 无参构造器（反序列化需要）。
          */
         SessionData() {
         }
+
+        // ===== 以下 getter/setter 供 Hutool JSON 序列化/反序列化使用 =====
+
+        public String getSessionId() { return sessionId; }
+        public void setSessionId(String sessionId) { this.sessionId = sessionId; }
+
+        public String getClientId() { return clientId; }
+        public void setClientId(String clientId) { this.clientId = clientId; }
+
+        public String getPeerId() { return peerId; }
+        public void setPeerId(String peerId) { this.peerId = peerId; }
+
+        public String getSm4Key() { return sm4Key; }
+        public void setSm4Key(String sm4Key) { this.sm4Key = sm4Key; }
+
+        public String getSm4Iv() { return sm4Iv; }
+        public void setSm4Iv(String sm4Iv) { this.sm4Iv = sm4Iv; }
+
+        public long getCreateTime() { return createTime; }
+        public void setCreateTime(long createTime) { this.createTime = createTime; }
+
+        public long getLastAccessTime() { return lastAccessTime; }
+        public void setLastAccessTime(long lastAccessTime) { this.lastAccessTime = lastAccessTime; }
+
+        public long getMaxLifetime() { return maxLifetime; }
+        public void setMaxLifetime(long maxLifetime) { this.maxLifetime = maxLifetime; }
+
+        public int getMaxRequests() { return maxRequests; }
+        public void setMaxRequests(int maxRequests) { this.maxRequests = maxRequests; }
+
+        public int getRequestCount() { return requestCount; }
+        public void setRequestCount(int requestCount) { this.requestCount = requestCount; }
+
+        public int getRekeyVersion() { return rekeyVersion; }
+        public void setRekeyVersion(int rekeyVersion) { this.rekeyVersion = rekeyVersion; }
+
+        public boolean isDestroyed() { return destroyed; }
+        public void setDestroyed(boolean destroyed) { this.destroyed = destroyed; }
     }
 }

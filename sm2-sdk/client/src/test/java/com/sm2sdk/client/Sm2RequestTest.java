@@ -3,7 +3,6 @@ package com.sm2sdk.client;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sm2sdk.core.exception.ErrorCode;
 import com.sm2sdk.core.exception.Sm2SdkException;
 import com.sm2sdk.core.session.Session;
@@ -32,7 +31,6 @@ class Sm2RequestTest {
     private SessionManager sessionManager;
 
     private Sm2ClientConfig config;
-    private ObjectMapper objectMapper;
 
     /** 测试用的会话对象 */
     private static final String SESSION_ID = "test-session-id";
@@ -49,7 +47,6 @@ class Sm2RequestTest {
         sdkConfig.setSm2PrivateKey("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
         sdkConfig.setSm2PublicKey("fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210");
         config = new Sm2ClientConfig(sdkConfig, PEER_ID);
-        objectMapper = new ObjectMapper();
     }
 
     /**
@@ -77,7 +74,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"message\":\"success\"}");
 
         Sm2Request request = new Sm2Request("GET", "/api/data", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
         request.param("key1", "value1");
         request.param("key2", "value2");
 
@@ -117,7 +114,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"message\":\"empty\"}");
 
         Sm2Request request = new Sm2Request("GET", "/api/empty", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);
@@ -145,7 +142,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"id\":42}");
 
         Sm2Request request = new Sm2Request("POST", "/api/create", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
         request.body("{\"name\":\"test\"}");
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
@@ -172,7 +169,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"id\":42}");
 
         Sm2Request request = new Sm2Request("POST", "/api/create", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
         request.body(Collections.singletonMap("name", "test"));
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
@@ -207,7 +204,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"result\":\"ok\"}");
 
         Sm2Request request = new Sm2Request("POST", "/api/no-body", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);
@@ -238,7 +235,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"updated\":true}");
 
         Sm2Request request = new Sm2Request("PUT", "/api/update", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
         request.body(Collections.singletonMap("field", "value"));
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
@@ -267,7 +264,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"deleted\":true}");
 
         Sm2Request request = new Sm2Request("DELETE", "/api/delete/1", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);
@@ -295,7 +292,7 @@ class Sm2RequestTest {
                 .thenReturn("{\"result\":\"decrypted\"}");
 
         Sm2Request request = new Sm2Request("GET", "/api/encrypt-test", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
         // GET 带参数才会触发加密（参数 → JSON → SM4 加密 → X-Sm2-Query header）
         request.param("key", "value");
 
@@ -330,7 +327,7 @@ class Sm2RequestTest {
         when(sessionManager.encryptBody(eq(SESSION_ID), anyString())).thenReturn("encrypted-body");
 
         Sm2Request request = spy(new Sm2Request("GET", "/api/data", config, sessionManager,
-                objectMapper, SESSION_ID));
+                SESSION_ID));
         // 重试时 doHandshake 被调用，返回新会话
         doReturn(newSession).when(request).doHandshake();
 
@@ -370,7 +367,7 @@ class Sm2RequestTest {
         when(sessionManager.encryptBody(eq(SESSION_ID), anyString())).thenReturn("encrypted-body");
 
         Sm2Request request = spy(new Sm2Request("GET", "/api/data", config, sessionManager,
-                objectMapper, SESSION_ID));
+                SESSION_ID));
         doReturn(newSession).when(request).doHandshake();
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
@@ -410,7 +407,7 @@ class Sm2RequestTest {
         when(sessionManager.encryptBody(eq(SESSION_ID), anyString())).thenReturn("encrypted-body");
 
         Sm2Request request = new Sm2Request("GET", "/api/error", config, sessionManager,
-                objectMapper, SESSION_ID);
+                SESSION_ID);
 
         try (MockedStatic<HttpUtil> httpUtilMock = mockStatic(HttpUtil.class)) {
             HttpRequest httpRequest = mock(HttpRequest.class);
@@ -429,7 +426,7 @@ class Sm2RequestTest {
     @Test
     void testChainMethods() {
         Sm2Request request = new Sm2Request("GET", "/test", config, sessionManager,
-                objectMapper, null);
+                null);
 
         // param returns this
         assertSame(request, request.param("k1", "v1"));

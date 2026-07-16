@@ -1,6 +1,5 @@
 package com.sm2sdk.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sm2sdk.core.model.Sm2SdkConfig;
 import com.sm2sdk.core.session.SessionManager;
 import org.slf4j.Logger;
@@ -40,9 +39,6 @@ public class Sm2HttpClient {
     /** 会话管理器 */
     private final SessionManager sessionManager;
 
-    /** JSON 序列化/反序列化工具 */
-    private final ObjectMapper objectMapper;
-
     /** 当前会话 ID（所有请求共享同一会话） */
     private volatile String currentSessionId;
 
@@ -59,7 +55,6 @@ public class Sm2HttpClient {
         Objects.requireNonNull(peerId, "peerId must not be null");
         this.config = new Sm2ClientConfig(config, peerId);
         this.sessionManager = sessionManager;
-        this.objectMapper = new ObjectMapper();
     }
 
     /**
@@ -73,7 +68,6 @@ public class Sm2HttpClient {
         Objects.requireNonNull(sessionManager, "sessionManager must not be null");
         this.config = config;
         this.sessionManager = sessionManager;
-        this.objectMapper = new ObjectMapper();
     }
 
     /**
@@ -126,7 +120,7 @@ public class Sm2HttpClient {
     private Sm2Request createRequest(String method, String path) {
         Sm2Request request = new Sm2Request(
                 method, path, config, sessionManager,
-                objectMapper, currentSessionId);
+                currentSessionId);
         return request;
     }
 

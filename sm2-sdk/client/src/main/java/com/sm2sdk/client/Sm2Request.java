@@ -4,8 +4,7 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.Method;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.hutool.json.JSONUtil;
 import com.sm2sdk.core.crypto.MemoryCleanUtil;
 import com.sm2sdk.core.crypto.Sm2KeyExchange;
 import com.sm2sdk.core.exception.ErrorCode;
@@ -68,9 +67,6 @@ public class Sm2Request {
     /** 会话管理器 */
     private final SessionManager sessionManager;
 
-    /** JSON 序列化/反序列化工具 */
-    private final ObjectMapper objectMapper;
-
     /** 查询参数 */
     private final Map<String, Object> params;
 
@@ -96,17 +92,15 @@ public class Sm2Request {
      * @param path           请求路径
      * @param config         客户端配置
      * @param sessionManager 会话管理器
-     * @param objectMapper   JSON 序列化工具
      * @param currentSessionId 当前会话 ID（可为 null）
      */
     Sm2Request(String httpMethod, String path, Sm2ClientConfig config,
-               SessionManager sessionManager, ObjectMapper objectMapper,
+               SessionManager sessionManager,
                String currentSessionId) {
         this.httpMethod = Objects.requireNonNull(httpMethod, "httpMethod must not be null");
         this.path = Objects.requireNonNull(path, "path must not be null");
         this.config = Objects.requireNonNull(config, "config must not be null");
         this.sessionManager = Objects.requireNonNull(sessionManager, "sessionManager must not be null");
-        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
         this.currentSessionId = currentSessionId;
         this.params = new LinkedHashMap<>();
         this.customHeaders = new LinkedHashMap<>();
@@ -328,12 +322,12 @@ public class Sm2Request {
             // 步骤 1: 构建握手初始化请求
             HandshakeInit init = keyExchange.buildInitRequest(
                     peerId, clientPrivKey, serverPubKey, peerId);
-            String initJson = objectMapper.writeValueAsString(init);
+            String initJson = JSONUtil.toJsonStr(init);
 
             // 发送 HandshakeInit 到服务端
             String initRespBody = sendHandshakeRequest(
                     serverUrl + "/handshake/init", initJson);
-            HandshakeServerResp serverResp = objectMapper.readValue(
+            HandshakeServerResp serverResp = JSONUtil.toBean(
                     initRespBody, HandshakeServerResp.class);
 
             // 步骤 2: 处理服务端响应，派生共享密钥
@@ -343,7 +337,7 @@ public class Sm2Request {
 
             // 步骤 3: 构建确认消息并发送
             HandshakeConfirm confirm = keyExchange.buildConfirm(result);
-            String confirmJson = objectMapper.writeValueAsString(confirm);
+            String confirmJson = JSONUtil.toJsonStr(confirm);
             sendHandshakeRequest(serverUrl + "/handshake/confirm", confirmJson);
 
             // 步骤 4: 创建会话
@@ -354,9 +348,6 @@ public class Sm2Request {
 
         } catch (Sm2SdkException e) {
             throw e;
-        } catch (JsonProcessingException e) {
-            throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED,
-                    "握手消息 JSON 序列化失败: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new Sm2SdkException(ErrorCode.HANDSHAKE_TIMEOUT,
                     "握手失败: " + e.getMessage(), e);
@@ -397,7 +388,7 @@ public class Sm2Request {
         }
         try {
             @SuppressWarnings("unchecked")
-            Map<String, String> errorMap = objectMapper.readValue(responseBody, Map.class);
+            Map<String, String> errorMap = JSONUtil.toBean(responseBody, Map.class);
             if (errorMap.containsKey("code") && errorMap.containsKey("message")) {
                 return String.format("errorCode=%s, message=%s, detail=%s",
                         errorMap.get("code"),
@@ -475,17 +466,17 @@ public class Sm2Request {
             switch (httpMethod.toUpperCase()) {
                 case "GET":
                 case "DELETE":
-                    return params.isEmpty() ? "" : objectMapper.writeValueAsString(params);
+                    return params.isEmpty() ? "" : JSONUtil.toJsonStr(params);
                 case "POST":
                 case "PUT":
                     Object bodyObj = prepareBodyWithIdempotencyKey();
                     return bodyObj != null
-                            ? objectMapper.writeValueAsString(bodyObj)
+                            ? JSONUtil.toJsonStr(bodyObj)
                             : "";
                 default:
                     return "";
             }
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED,
                     "JSON 序列化失败: " + e.getMessage(), e);
         }
@@ -514,10 +505,10 @@ public class Sm2Request {
             return bodyMap;
         }
 
-        // body 是 POJO 对象，通过 ObjectMapper 转换为 Map 后再注入
+        // body 是 POJO 对象，通过 JSON 转换为 Map 后再注入
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> bodyMap = objectMapper.convertValue(requestBody, Map.class);
+            Map<String, Object> bodyMap = JSONUtil.parseObj(
+                    JSONUtil.toJsonStr(requestBody));
             if (!bodyMap.containsKey("_idempotencyKey")) {
                 bodyMap.put("_idempotencyKey", getIdempotencyKey());
             }
@@ -585,8 +576,8 @@ public class Sm2Request {
             return result;
         }
         try {
-            return objectMapper.readValue(plainResponse, responseType);
-        } catch (JsonProcessingException e) {
+            return JSONUtil.toBean(plainResponse, responseType);
+        } catch (Exception e) {
             throw new Sm2SdkException(ErrorCode.CLIENT_INIT_FAILED,
                     "响应 JSON 反序列化失败: " + e.getMessage(), e);
         }

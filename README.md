@@ -61,20 +61,36 @@ SDK 尚未发布到公共 Maven 仓库，可通过以下方式一或方式二获
 
 ### 直接下载 JAR
 
-| JAR | 说明 | 内置依赖 |
-|-----|------|---------|
-| `sm2-sdk-core-1.0.0.jar` | 核心加解密 | 无，需自行提供 bcprov、hutool 等 |
-| `sm2-sdk-client-1.0.0.jar` | HTTP 客户端 | 依赖 core |
-| `sm2-sdk-spring-boot-starter-1.0.0.jar` | Boot 2.7 一体化包 | **内置全部依赖**（Hutool、Jackson、BouncyCastle） |
-| `sm2-sdk-spring-boot3-starter-1.0.0.jar` | Boot 3.x 一体化包 | **内置全部依赖** |
+> **v1.0.0+**：Starter 已改为标准 thin JAR（~50KB）。所有第三方依赖（hutool、bcprov、caffeine）通过 Maven 传递依赖自动引入，无需手动管理。**必须使用 `mvn install` 方式引入**，不再支持 `system` scope 引入。
 
-分两种方式引用：**1.安装到本地 Maven 仓库  2.引用本地 lib 目录的 JAR**
+| JAR | 大小 | 说明 |
+|-----|------|------|
+| `sm2-sdk-core-1.0.0.jar` | ~60KB | 核心加解密 |
+| `sm2-sdk-client-1.0.0.jar` | ~16KB | HTTP 客户端，依赖 core |
+| `sm2-sdk-spring-boot-starter-1.0.0.jar` | ~50KB | Boot 2.7 自动配置，依赖 core+client |
+| `sm2-sdk-spring-boot3-starter-1.0.0.jar` | ~50KB | Boot 3.x 自动配置，依赖 core+client |
 
-### 方式一：安装到本地 Maven 仓库
+> **传递依赖**：Maven 会自动引入 `bcprov-jdk18on`、`hutool-crypto`、`hutool-http`、`hutool-bloomFilter`、`hutool-json`、`caffeine`，无需手动声明。
 
-将 JAR 包安装到本地 `~/.m2` 仓库，安装后即可按上方 Maven 依赖正常引用。
+### 安装到本地 Maven 仓库
 
 ```bash
+# 在 sm2-sdk 项目根目录执行（一键安装全部模块到 ~/.m2）
+cd sm2-sdk
+mvn clean install -DskipTests
+```
+
+如需单独安装各个 JAR：
+
+```bash
+# 安装父 POM
+mvn install:install-file \
+  -Dfile=sm2-sdk-parent-1.0.0.pom \
+  -DgroupId=com.sm2sdk \
+  -DartifactId=sm2-sdk-parent \
+  -Dversion=1.0.0 \
+  -Dpackaging=pom
+
 # 安装 core
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-core-1.0.0.jar \
@@ -91,15 +107,7 @@ mvn install:install-file \
   -Dversion=1.0.0 \
   -Dpackaging=jar
 
-# 安装 Spring Boot 2.7 Starter（内置全部依赖自动引入前两个，推荐）
-mvn install:install-file \
-  -Dfile=lib/sm2-sdk-spring-boot-starter-1.0.0.jar \
-  -DgroupId=com.sm2sdk \
-  -DartifactId=sm2-sdk-spring-boot-starter \
-  -Dversion=1.0.0 \
-  -Dpackaging=jar
-
-# 安装 Spring Boot 3.x Starter（内置全部依赖自动引入前两个，推荐）
+# 安装 Starter
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-spring-boot3-starter-1.0.0.jar \
   -DgroupId=com.sm2sdk \
@@ -108,30 +116,7 @@ mvn install:install-file \
   -Dpackaging=jar
 ```
 
-### 方式二：引用本地 lib 目录的 JAR
-
-在项目根目录创建 `lib/` 文件夹，放入 JAR 包，然后在 `pom.xml` 中配置 `system` scope 依赖：
-
-```xml
-<!-- springboot2        -->
-<dependency>
-    <groupId>com.sm2sdk</groupId>
-    <artifactId>sm2-sdk-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
-    <scope>system</scope>
-    <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot-starter-1.0.0.jar</systemPath>
-</dependency>
-<!-- springboot3       -->
-<dependency>
-    <groupId>com.sm2sdk</groupId>
-    <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
-    <version>1.0.0</version>
-    <scope>system</scope>
-    <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
-</dependency>
-```
-
-> **注意**：`system` scope 的依赖不会传递。Starter JAR 已内置全部依赖，无需额外引入；若使用 `sm2-sdk-core`，需自行提供 bcprov、hutool 等依赖。
+安装后按上方 Maven 依赖正常引用，Maven 会自动拉取 bcprov、hutool、caffeine 等传递依赖。
 
 ---
 
@@ -139,26 +124,26 @@ mvn install:install-file \
 
 双方各自生成一对 SM2 密钥。**私钥自己保留，公钥给对方。**
 
-### 方式一：从 Starter JAR（推荐，拿到 JAR 就能用）
+### 方式一：使用 Maven（推荐）
 
 ```bash
-# Windows
-#springboot2
-java -cp sm2-sdk-spring-boot-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen
-#springboot3
-java -cp sm2-sdk-spring-boot3-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen
+# 在任意目录执行，Maven 自动解析传递依赖
+mvn dependency:exec -Dexec.classpathScope=compile \
+  -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" \
+  -DincludeGroupIds="com.sm2sdk"
 
-# Linux / Mac
-#springboot2
-java -cp sm2-sdk-spring-boot-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen
-#springboot3
-java -cp sm2-sdk-spring-boot3-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen
+# 批量生成
+mvn dependency:exec -Dexec.classpathScope=compile \
+  -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" \
+  -Dexec.args="3"
+```
 
-# 一次生成多对
-#springboot2
-java -cp sm2-sdk-spring-boot-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen 3
-#springboot3
-java -cp sm2-sdk-spring-boot3-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen 3
+### 方式二：从本地 Maven 仓库 classpath（需手动拼依赖）
+
+```bash
+# 在已 mvn install 的机器上，用 Maven 构建 classpath
+CP=$(mvn -f path/to/your/pom.xml dependency:build-classpath -DincludeScope=compile -q -Dmdep.outputFile=/dev/stdout 2>/dev/null)
+java -cp "$CP" com.sm2sdk.core.util.Sm2KeyGen
 ```
 
 ### 输出示例
@@ -747,18 +732,19 @@ mvn clean package -Prelease
 
 ```
 sm2-sdk/
-├── core/target/sm2-sdk-core-1.0.0.jar
-├── client/target/sm2-sdk-client-1.0.0.jar
-├── spring-boot-starter/target/sm2-sdk-spring-boot-starter-1.0.0.jar    ← Boot 2.7 一体化
-└── spring-boot3-starter/target/sm2-sdk-spring-boot3-starter-1.0.0.jar  ← Boot 3.x 一体化
+├── pom.xml                                              ← 父 POM（版本管理）
+├── core/target/sm2-sdk-core-1.0.0.jar                   ← 核心加解密（~60KB）
+├── client/target/sm2-sdk-client-1.0.0.jar               ← HTTP 客户端（~16KB）
+├── spring-boot-starter/target/sm2-sdk-spring-boot-starter-1.0.0.jar    ← Boot 2.7 自动配置（~50KB）
+└── spring-boot3-starter/target/sm2-sdk-spring-boot3-starter-1.0.0.jar  ← Boot 3.x 自动配置（~50KB）
 ```
 
-Starter JAR 已通过 maven-shade-plugin 内置 Hutool、Jackson、BouncyCastle（包名 relocate 到 `com.sm2sdk.third.*`，不与业务方依赖冲突）。
+Starter 是标准 thin JAR，**不内置第三方依赖**。所有依赖（bcprov、hutool 模块、caffeine）通过 Maven 传递依赖自动引入。JSON 序列化使用 Hutool JSON（`hutool-json`），不再依赖 Jackson。
 
 ### 给下游系统交付
 
-交付两个 Starter JAR（boot2 + boot3），以及本 README。下游系统只需：
-1. 把 JAR 放进项目（或配置私有 Maven 仓库）
+交付全部 JAR + 父 POM，下游系统通过 `mvn install` 或私有 Maven 仓库引用。下游系统只需：
+1. 引入 Starter 依赖，Maven 自动拉取所有传递依赖
 2. 生成自己的密钥对
 3. 配 yml、启动
 
@@ -833,8 +819,8 @@ sm2-sdk/                              # SDK 主项目
 │       ├── session/                      # 会话管理
 │       └── util/Sm2KeyGen.java           # 密钥生成工具
 ├── client/                           # HTTP 客户端（Sm2HttpClient）
-├── spring-boot-starter/              # Boot 2.7 自动配置 + shade（javax.servlet）
-└── spring-boot3-starter/             # Boot 3.x 自动配置 + shade（jakarta.servlet）
+├── spring-boot-starter/              # Boot 2.7 自动配置（javax.servlet）
+└── spring-boot3-starter/             # Boot 3.x 自动配置（jakarta.servlet）
 
 tools/                                # 密钥生成脚本
 ├── keygen.bat
@@ -1109,21 +1095,25 @@ public Map echo(@RequestBody Map b) {  → 会话自动管理
 
 ### 服务端最简接入（4 步）
 
-#### 第 1 步：放入 JAR，配置 pom.xml
+#### 第 1 步：安装 SDK 到本地仓库，配置 pom.xml
 
-在项目根目录创建 `lib/` 文件夹，把 `sm2-sdk-spring-boot3-starter-1.0.0.jar` 放进去，然后在 `pom.xml` 添加：
+```bash
+# 在 sm2-sdk 项目根目录执行
+cd sm2-sdk
+mvn clean install -DskipTests
+```
+
+然后在你的项目 `pom.xml` 添加：
 
 ```xml
 <dependency>
     <groupId>com.sm2sdk</groupId>
     <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
     <version>1.0.0</version>
-    <scope>system</scope>
-    <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
 </dependency>
 ```
 
-> 该 JAR 已内置所有依赖，无需额外引入 bcprov、hutool 等。
+> Maven 会自动引入 bcprov、hutool（crypto/http/bloomFilter/json）、caffeine 等传递依赖，无需手动声明。
 
 #### 第 2 步：生成密钥
 
@@ -1198,9 +1188,9 @@ public class MyController {
 
 假设你已经有一个 Spring Boot 应用需要调用上面的服务端。
 
-#### 第 1 步：放入 JAR，配置 pom.xml
+#### 第 1 步：安装 SDK 到本地仓库，配置 pom.xml
 
-同服务端第 1 步，把同一个 JAR 放到 `lib/`，加同样的 dependency。
+同服务端第 1 步。
 
 #### 第 2 步：生成密钥
 
@@ -1280,9 +1270,7 @@ public class ClientController {
 
 ```
 my-client/
-├── lib/
-│   └── sm2-sdk-spring-boot3-starter-1.0.0.jar
-├── pom.xml                     ← 加 system scope dependency + spring-boot-starter-web
+├── pom.xml                     ← 标准 Maven 依赖
 ├── application.yml             ← 上面第 3 步的配置
 └── src/main/java/com/example/
     ├── Application.java        ← @SpringBootApplication
@@ -1322,8 +1310,6 @@ my-client/
             <groupId>com.sm2sdk</groupId>
             <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
             <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/sm2-sdk-spring-boot3-starter-1.0.0.jar</systemPath>
         </dependency>
     </dependencies>
 
@@ -1432,17 +1418,17 @@ sm2:
 {"code": "29002", "message": "签名校验失败", "detail": "客户端签名验证失败: ..."}
 ```
 
-### 5. Jackson 反序列化攻击
+### 5. JSON 反序列化安全
 
-**攻击方式**：通过构造恶意 JSON 触发 Jackson 反序列化漏洞（gadget chains），或通过超长数字绕过 maxNumberLength 限制（WS-2026-0003）。
+**攻击方式**：通过构造恶意超大 JSON 请求体导致内存耗尽（DoS）。
 
 **防护机制**：
 
 | 防护层 | 机制 | 默认值 |
 |--------|------|--------|
-| StreamReadConstraints | 限制 JSON 字符串最大长度、数字长度、嵌套深度 | 字符串 1MB / 数字 1000 位 / 深度 100 |
-| Content-Type 隔离 | `Sm2EncryptedBodyConverter` 仅处理 `text/plain`，不干扰正常 JSON 处理 | — |
-| 默认 ObjectMapper | 不启用 `enableDefaultTyping`，避免多态反序列化风险 | — |
+| 请求体大小限制 | `Sm2EncryptedBodyConverter` 反序列化前检查 Body 字节数 | 最大 1MB |
+| Content-Type 隔离 | 仅处理 `text/plain`（密文请求），不干扰正常 JSON 处理 | — |
+| Hutool JSON | SDK 内部使用 Hutool JSON（`JSONUtil`）替代 Jackson，无 gadget chain 风险 | — |
 
 ### 6. 未授权端点暴露
 
@@ -1526,7 +1512,7 @@ SDK 引入后的完整攻击面及防护状态：
 | 重放攻击 | 🟠 中 | ✅ Nonce + 时间戳 |
 | 敏感信息泄露（异常详情） | 🟠 中 | ✅ 生产模式隐藏 detail |
 | 请求体过大（内存耗尽） | 🟠 中 | ✅ Body size 限制 |
-| Jackson 反序列化漏洞 | 🟡 低 | ✅ StreamReadConstraints |
+| JSON 反序列化 DoS | 🟡 低 | ✅ 请求体大小限制 + Hutool JSON |
 | 解密 Oracle（侧信道） | 🟡 低 | ⚠️ 加密失败统一错误码 |
 | 未授权端点暴露（纯客户端） | 🟡 低 | ✅ server-role 开关 |
 | 会话 ID 暴力猜测 | 🟢 极低 | UUID 随机生成 |

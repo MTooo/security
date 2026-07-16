@@ -18,22 +18,31 @@
     <description>SM2 Security Data Exchange SDK - Core Module</description>
 
     <dependencies>
-        <!-- Hutool - utility toolkit -->
+        <!-- Hutool - 仅引入实际使用的模块：加密(SM2/SM3/SM4)、HTTP客户端、布隆过滤器 -->
         <dependency>
             <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
+            <artifactId>hutool-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-bloomFilter</artifactId>
         </dependency>
 
-        <!-- BouncyCastle - 国密 SM2/SM3/SM4 底层加密提供者（jdk18on 兼容 JDK 8/11/17/21） -->
+        <!-- BouncyCastle - 国密 SM2/SM3/SM4 底层加密提供者（jdk18on 兼容 JDK 8/11/17/21）
+             编译期依赖，会传递到接入方；不在 starter fat JAR 中打包（由 shade 排除） -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
 
-        <!-- Jackson - JSON processing (to be shaded) -->
+        <!-- Hutool JSON - 替代 Jackson 做 JSON 序列化/反序列化 -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-json</artifactId>
         </dependency>
 
         <!-- Caffeine - caching -->
