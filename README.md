@@ -39,21 +39,21 @@ SDK 尚未发布到公共 Maven 仓库，可通过以下方式一或方式二获
 ```xml
 <!-- Spring Boot 2.7 + JDK 8/11 -->
 <dependency>
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-spring-boot-starter</artifactId>
     <version>1.0.0</version>
 </dependency>
 
 <!-- Spring Boot 3.x + JDK 17+ -->
 <dependency>
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
     <version>1.0.0</version>
 </dependency>
 
 <!-- 仅加解密，不依赖 Spring -->
 <dependency>
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-core</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -86,7 +86,7 @@ mvn clean install -DskipTests
 # 安装父 POM
 mvn install:install-file \
   -Dfile=sm2-sdk-parent-1.0.0.pom \
-  -DgroupId=com.sm2sdk \
+  -DgroupId=io.github.mtooo \
   -DartifactId=sm2-sdk-parent \
   -Dversion=1.0.0 \
   -Dpackaging=pom
@@ -94,7 +94,7 @@ mvn install:install-file \
 # 安装 core
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-core-1.0.0.jar \
-  -DgroupId=com.sm2sdk \
+  -DgroupId=io.github.mtooo \
   -DartifactId=sm2-sdk-core \
   -Dversion=1.0.0 \
   -Dpackaging=jar
@@ -102,7 +102,7 @@ mvn install:install-file \
 # 安装 client
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-client-1.0.0.jar \
-  -DgroupId=com.sm2sdk \
+  -DgroupId=io.github.mtooo \
   -DartifactId=sm2-sdk-client \
   -Dversion=1.0.0 \
   -Dpackaging=jar
@@ -110,7 +110,7 @@ mvn install:install-file \
 # 安装 Starter
 mvn install:install-file \
   -Dfile=lib/sm2-sdk-spring-boot3-starter-1.0.0.jar \
-  -DgroupId=com.sm2sdk \
+  -DgroupId=io.github.mtooo \
   -DartifactId=sm2-sdk-spring-boot3-starter \
   -Dversion=1.0.0 \
   -Dpackaging=jar
@@ -129,12 +129,12 @@ mvn install:install-file \
 ```bash
 # 在任意目录执行，Maven 自动解析传递依赖
 mvn dependency:exec -Dexec.classpathScope=compile \
-  -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" \
-  -DincludeGroupIds="com.sm2sdk"
+  -Dexec.mainClass="io.github.mtooo.core.util.Sm2KeyGen" \
+  -DincludeGroupIds="io.github.mtooo"
 
 # 批量生成
 mvn dependency:exec -Dexec.classpathScope=compile \
-  -Dexec.mainClass="com.sm2sdk.core.util.Sm2KeyGen" \
+  -Dexec.mainClass="io.github.mtooo.core.util.Sm2KeyGen" \
   -Dexec.args="3"
 ```
 
@@ -143,7 +143,7 @@ mvn dependency:exec -Dexec.classpathScope=compile \
 ```bash
 # 在已 mvn install 的机器上，用 Maven 构建 classpath
 CP=$(mvn -f path/to/your/pom.xml dependency:build-classpath -DincludeScope=compile -q -Dmdep.outputFile=/dev/stdout 2>/dev/null)
-java -cp "$CP" com.sm2sdk.core.util.Sm2KeyGen
+java -cp "$CP" io.github.mtooo.core.util.Sm2KeyGen
 ```
 
 ### 输出示例
@@ -424,7 +424,7 @@ sm2:
 ```java
 package com.example.myapp;
 
-import com.sm2sdk.core.access.Sm2AccessController;
+import io.github.mtooo.core.access.Sm2AccessController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -455,7 +455,7 @@ public class MyAccessControlConfig {
 实现类示例：
 
 ```java
-import com.sm2sdk.core.access.Sm2AccessController;
+import io.github.mtooo.core.access.Sm2AccessController;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.AntPathMatcher;
 
@@ -1107,7 +1107,7 @@ mvn clean install -DskipTests
 
 ```xml
 <dependency>
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -1118,7 +1118,7 @@ mvn clean install -DskipTests
 #### 第 2 步：生成密钥
 
 ```bash
-java -cp lib/sm2-sdk-spring-boot3-starter-1.0.0.jar com.sm2sdk.core.util.Sm2KeyGen
+java -cp lib/sm2-sdk-spring-boot3-starter-1.0.0.jar io.github.mtooo.core.util.Sm2KeyGen
 ```
 
 输出：
@@ -1159,7 +1159,7 @@ sm2:
 ```java
 package com.example.demo;
 
-import com.sm2sdk.core.annotation.Sm2Secured;
+import io.github.mtooo.core.annotation.Sm2Secured;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -1227,7 +1227,7 @@ sm2:
 ```java
 package com.example.demo;
 
-import com.sm2sdk.client.Sm2HttpClient;
+import io.github.mtooo.client.Sm2HttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -1307,7 +1307,7 @@ my-client/
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.sm2sdk</groupId>
+            <groupId>io.github.mtooo</groupId>
             <artifactId>sm2-sdk-spring-boot3-starter</artifactId>
             <version>1.0.0</version>
         </dependency>

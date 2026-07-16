@@ -16,7 +16,7 @@ buildConfirm: compute SA=SM3(0x03||y1||SM3(x1||ZA||ZB||RA||RB)), return Base64(S
 
 verifyConfirm: compare computed SA with received SA
 
-Critical: all SM2 ops use relocated Hutool (com.sm2sdk.third.hutool.crypto.SmUtil). Ephemeral private keys cleared after use with MemoryCleanUtil.
+Critical: all SM2 ops use relocated Hutool (io.github.mtooo.third.hutool.crypto.SmUtil). Ephemeral private keys cleared after use with MemoryCleanUtil.
 
 Test: full roundtrip (generate keys, handshake, both sides same sm4Key), signature verification failures, timestamp validation, point-on-curve checks.
 

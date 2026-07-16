@@ -6,7 +6,7 @@
 
 ### Parent POM Details
 
-- **GroupId:** `com.sm2sdk`
+- **GroupId:** `io.github.mtooo`
 - **ArtifactId:** `sm2-sdk-parent`
 - **Version:** `1.0.0`
 - **Packaging:** `pom`

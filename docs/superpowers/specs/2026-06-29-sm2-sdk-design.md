@@ -30,7 +30,7 @@ security/
 1. **核心 SDK 零框架依赖**：core + client 不依赖 Spring/Servlet，可用于任何 Java 8+ 项目
 2. **Spring 集成分离**：boot2（javax.servlet）和 boot3（jakarta.servlet）是两个独立项目
 3. **Spring Interceptor 模式**：服务端使用 `HandlerInterceptor` + `ResponseBodyAdvice`，比 Filter 更贴合 Spring Boot 生态
-4. **Shade 重定位**：Starter 中将 Hutool/Jackson/BouncyCastle relocate 到 `com.sm2sdk.third.*`
+4. **Shade 重定位**：Starter 中将 Hutool/Jackson/BouncyCastle relocate 到 `io.github.mtooo.third.*`
 
 ### 1.3 模块依赖
 

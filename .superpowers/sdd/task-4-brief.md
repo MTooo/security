@@ -10,7 +10,7 @@
 - [ ] **Step 1: Write ErrorCodeTest (TDD)**
 
 ```java
-package com.sm2sdk.core.exception;
+package io.github.mtooo.core.exception;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

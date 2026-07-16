@@ -102,10 +102,10 @@ cd ../sm2-sdk-spring-boot3 && mvn clean package
 
 | Scenario | Dependency |
 |----------|-----------|
-| Pure crypto/signing (any JDK 8+) | `com.sm2sdk:sm2-sdk-core` |
-| Crypto + HTTP client | `com.sm2sdk:sm2-sdk-core` + `sm2-sdk-client` |
-| Spring Boot 2.7 integration (JDK 8) | `com.sm2sdk:sm2-sdk-spring-boot-starter` |
-| Spring Boot 3.x integration (JDK 17) | `com.sm2sdk:sm2-sdk-spring-boot3-starter` |
+| Pure crypto/signing (any JDK 8+) | `io.github.mtooo:sm2-sdk-core` |
+| Crypto + HTTP client | `io.github.mtooo:sm2-sdk-core` + `sm2-sdk-client` |
+| Spring Boot 2.7 integration (JDK 8) | `io.github.mtooo:sm2-sdk-spring-boot-starter` |
+| Spring Boot 3.x integration (JDK 17) | `io.github.mtooo:sm2-sdk-spring-boot3-starter` |
 
 ---
 

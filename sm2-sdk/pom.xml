@@ -4,45 +4,41 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <name>SM2 Security Data Exchange SDK</name>
     <description>SM2 安全数据交换 SDK — 加解密、签名验签、会话管理、HTTP 客户端、Spring Boot 自动配置</description>
-    <url>https://github.com/oubin/sm2-sdk</url>
+    <url>https://github.com/MTooo/security</url>
 
+    <!--用于发布：开源协议...-->
     <licenses>
         <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-
+    <!--用于发布：开发者信息-->
     <developers>
         <developer>
-            <name>oubin</name>
-            <email>oubin@example.com</email>
+            <!--对应你maven配置中的server id-->
+            <id>MTooo</id>
+            <name>0dy2ya</name>
+            <email>1043939089@qq.com</email>
+            <roles>
+                <role>Project Manager</role>
+                <role>Developer</role>
+            </roles>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/oubin/sm2-sdk.git</connection>
-        <developerConnection>scm:git:https://github.com/oubin/sm2-sdk.git</developerConnection>
-        <url>https://github.com/oubin/sm2-sdk</url>
+        <connection>scm:git:https://github.com/MTooo/security.git</connection>
+        <developerConnection>scm:git:https://github.com/MTooo/security.git</developerConnection>
+        <url>https://github.com/MTooo/security</url>
     </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <modules>
         <module>core</module>
@@ -147,12 +143,12 @@
 
             <!-- === SDK 内部模块版本 === -->
             <dependency>
-                <groupId>com.sm2sdk</groupId>
+                <groupId>io.github.mtooo</groupId>
                 <artifactId>sm2-sdk-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.sm2sdk</groupId>
+                <groupId>io.github.mtooo</groupId>
                 <artifactId>sm2-sdk-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -269,6 +265,32 @@
                 </plugin>
 
                 <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>${flatten-maven-plugin.version}</version>
+                    <configuration>
+                        <updatePomFile>true</updatePomFile>
+                        <flattenMode>ossrh</flattenMode>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>flatten</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>flatten</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>flatten.clean</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
@@ -294,6 +316,7 @@
                     <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <additionalJOption>-Xdoclint:none</additionalJOption>
                     </configuration>
                     <executions>
                         <execution>
@@ -325,11 +348,10 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.7.0</version>
+                    <version>0.8.0</version>
                     <extensions>true</extensions>
                     <configuration>
-                        <publishingServerId>ossrh</publishingServerId>
-                        <tokenAuth>true</tokenAuth>
+                        <publishingServerId>MTooo</publishingServerId>
                     </configuration>
                 </plugin>
             </plugins>
@@ -342,6 +364,10 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                     </plugin>
@@ -352,6 +378,10 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>

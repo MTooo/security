@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.sm2sdk</groupId>
+        <groupId>io.github.mtooo</groupId>
         <artifactId>sm2-sdk-parent</artifactId>
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
@@ -20,7 +20,7 @@
     <dependencies>
         <!-- Core module -->
         <dependency>
-            <groupId>com.sm2sdk</groupId>
+            <groupId>io.github.mtooo</groupId>
             <artifactId>sm2-sdk-core</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -22,8 +22,8 @@
 Tests run: 80, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-- `com.sm2sdk.core.exception.ErrorCodeTest`: 40 tests, all pass (pre-existing, unaffected)
-- `com.sm2sdk.core.session.SessionTest`: 40 tests, all pass
+- `io.github.mtooo.core.exception.ErrorCodeTest`: 40 tests, all pass (pre-existing, unaffected)
+- `io.github.mtooo.core.session.SessionTest`: 40 tests, all pass
 
 ## Key Design Decisions
 

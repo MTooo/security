@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.sm2sdk</groupId>
+    <groupId>io.github.mtooo</groupId>
     <artifactId>sm2-sdk-demo-boot2</artifactId>
     <version>1.0.0</version>
 
@@ -100,7 +100,7 @@
         </dependency>
         <!-- 唯一需要的 SDK 依赖 -->
         <dependency>
-            <groupId>com.sm2sdk</groupId>
+            <groupId>io.github.mtooo</groupId>
             <artifactId>sm2-sdk-spring-boot-starter</artifactId>
             <version>1.0.0</version>
         </dependency>

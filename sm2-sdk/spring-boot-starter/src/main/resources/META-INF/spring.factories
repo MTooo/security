@@ -1,1 +1,1 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.sm2sdk.starter.Sm2SdkAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=io.github.mtooo.starter.Sm2SdkAutoConfiguration

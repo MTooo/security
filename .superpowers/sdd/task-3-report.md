@@ -17,11 +17,11 @@ f3cdac4 feat: create client, server, and starter module POMs with shade plugin
 All 5 modules passed: parent, core, client, server, starter.
 
 ## Key Details
-- All three modules inherit from `com.sm2sdk:sm2-sdk-parent:1.0.0-SNAPSHOT`
+- All three modules inherit from `io.github.mtooo:sm2-sdk-parent:1.0.0-SNAPSHOT`
 - All dependency versions come from parent `dependencyManagement` (via BOM imports for Spring Boot and Spring Framework)
 - Starter POM includes `maven-shade-plugin` with:
-  - Relocation: `cn.hutool` -> `com.sm2sdk.third.hutool`
-  - Relocation: `com.fasterxml.jackson` -> `com.sm2sdk.third.jackson`
+  - Relocation: `cn.hutool` -> `io.github.mtooo.third.hutool`
+  - Relocation: `com.fasterxml.jackson` -> `io.github.mtooo.third.jackson`
   - Filter exclusions: `META-INF/*.SF`, `META-INF/*.DSA`, `META-INF/*.RSA`
   - `createDependencyReducedPom: true`
   - Phase: `package`, Goal: `shade`
