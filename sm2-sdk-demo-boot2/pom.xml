@@ -102,7 +102,7 @@
         <dependency>
             <groupId>io.github.mtooo</groupId>
             <artifactId>sm2-sdk-spring-boot-starter</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
         <!-- 测试 -->
